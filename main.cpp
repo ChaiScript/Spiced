@@ -3,9 +3,36 @@
 #include <iostream>
 #include <chrono>
 
+struct TileProperties
+{
+  TileProperties(bool t_passable = true)
+    : passable(t_passable)
+  {
+  }
+
+  bool passable;
+};
+
+struct TileData
+{
+  TileData(int t_x, int t_y, TileProperties t_props, sf::FloatRect t_bounds)
+    : x(t_x), y(t_y), properties(std::move(t_props)), bounds(std::move(t_bounds))
+  {
+  }
+
+  int x;
+  int y;
+  TileProperties properties;
+  sf::FloatRect bounds;
+};
+
 class TileMap : public sf::Drawable, public sf::Transformable
 {
   public:
+    TileMap(std::map<int, TileProperties> t_mapDefaults)
+      : m_mapDefaults(std::move(t_mapDefaults))
+    {
+    }
 
     bool load(const std::string& tileset, sf::Vector2u tileSize, const int* tiles, unsigned int width, unsigned int height)
     {
@@ -16,13 +43,29 @@ class TileMap : public sf::Drawable, public sf::Transformable
       // resize the vertex array to fit the level size
       m_vertices.setPrimitiveType(sf::Quads);
       m_vertices.resize(width * height * 4);
+      m_tileData.reserve(width * height);
 
       // populate the vertex array, with one quad per tile
       for (unsigned int i = 0; i < width; ++i)
+      {
         for (unsigned int j = 0; j < height; ++j)
         {
           // get the current tile number
           int tileNumber = tiles[i + j * width];
+
+
+          auto tilePropsFunc = [tileNumber, this](){
+            auto defaults_itr = m_mapDefaults.find(tileNumber);
+            if (defaults_itr != m_mapDefaults.end()) {
+              return defaults_itr->second;
+            } else {
+              return TileProperties();
+            }
+          };
+
+
+          m_tileData.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * tileSize.x, j * tileSize.y, tileSize.x, tileSize.y));
+
 
           // find its position in the tileset texture
           int tu = tileNumber % (m_tileset.getSize().x / tileSize.x);
@@ -31,11 +74,13 @@ class TileMap : public sf::Drawable, public sf::Transformable
           // get a pointer to the current tile's quad
           sf::Vertex* quad = &m_vertices[(i + j * width) * 4];
 
+
           // define its 4 corners
           quad[0].position = sf::Vector2f(i * tileSize.x, j * tileSize.y);
           quad[1].position = sf::Vector2f((i + 1) * tileSize.x, j * tileSize.y);
           quad[2].position = sf::Vector2f((i + 1) * tileSize.x, (j + 1) * tileSize.y);
           quad[3].position = sf::Vector2f(i * tileSize.x, (j + 1) * tileSize.y);
+
 
           // define its 4 texture coordinates
           quad[0].texCoords = sf::Vector2f(tu * tileSize.x, tv * tileSize.y);
@@ -43,8 +88,44 @@ class TileMap : public sf::Drawable, public sf::Transformable
           quad[2].texCoords = sf::Vector2f((tu + 1) * tileSize.x, (tv + 1) * tileSize.y);
           quad[3].texCoords = sf::Vector2f(tu * tileSize.x, (tv + 1) * tileSize.y);
         }
+      }
 
       return true;
+    }
+
+    bool testMove(const sf::Sprite &t_s, const sf::Vector2f &distance) const
+    {
+      auto newBoundingBox = sf::Transform().translate(distance).transformRect(t_s.getGlobalBounds());
+
+      for (const auto &data : m_tileData)
+      {
+        if (!data.properties.passable && data.bounds.intersects(newBoundingBox))
+        {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    sf::Vector2f adjustMove(const sf::Sprite &t_s, const sf::Vector2f &distance)
+    {
+      if (testMove(t_s, distance)) {
+        return distance;
+      }
+
+      auto xOnly = sf::Vector2f(distance.x, 0);
+      if (testMove(t_s, xOnly)) {
+        return xOnly;
+      }
+
+      auto yOnly = sf::Vector2f(distance.y, 0);
+      if (testMove(t_s, yOnly)) {
+        return yOnly;
+      }
+
+      return sf::Vector2f(0,0);
+
     }
 
   private:
@@ -63,6 +144,8 @@ class TileMap : public sf::Drawable, public sf::Transformable
 
     sf::VertexArray m_vertices;
     sf::Texture m_tileset;
+    std::vector<TileData> m_tileData;
+    std::map<int, TileProperties> m_mapDefaults;
 };
 
 int main()
@@ -72,6 +155,7 @@ int main()
 
   sf::Texture spritetexture;
   spritetexture.loadFromFile("sprite.png");
+
   sf::Sprite stickMan(spritetexture);
   stickMan.setPosition(200, 200);
 
@@ -99,7 +183,8 @@ int main()
   };
 
   // create the tilemap from the level definition
-  TileMap map;
+  TileMap map({{1, TileProperties(false)}});
+
   if (!map.load("tileset.png", sf::Vector2u(32, 32), level, 32, 16))
     return -1;
 
@@ -148,8 +233,9 @@ int main()
 
     velocity += sf::Vector2f(sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::X)/100 * 20, sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::Y)/100 * 20);
 
-    velocity *= time_elapsed;
-    stickMan.move(velocity);
+    auto distance = map.adjustMove(stickMan, velocity * time_elapsed);
+    stickMan.move(distance);
+
     sf::View mainView(stickMan.getPosition(), sf::Vector2f(512,256));
     window.setView(mainView);
 
