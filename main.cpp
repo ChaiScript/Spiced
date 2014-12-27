@@ -9,7 +9,7 @@ struct TileProperties
 {
   TileProperties(bool t_passable = true, 
       std::function<void (float, float)> t_movementAction = [](float time, float distance) { 
-        std::cout << "Traveled " << distance << " pixels in " << time << "seconds\n";
+//        std::cout << "Traveled " << distance << " pixels in " << time << "seconds\n";
       })
 
     : passable(t_passable), movementAction(std::move(t_movementAction))
@@ -78,44 +78,42 @@ struct LineSegment
 
   LineSegment clipTo(const sf::FloatRect &t_rect) const
   {
-
-    if (t_rect.contains(p1) && t_rect.contains(p2))
+    auto containsP1 = t_rect.contains(p1);
+    auto containsP2 = t_rect.contains(p2);
+    if (containsP1 && containsP2)
     {
       return *this;
     }
 
-    const sf::FloatRect bounds = [this]() {
-      auto rect = boundingRect();
-      rect.width += std::numeric_limits<float>::epsilon();
-      rect.height += std::numeric_limits<float>::epsilon();
-      return rect;
-    }();
+    const sf::FloatRect bounds = boundingRect();
 
-    auto validate = [t_rect, bounds](const float x, const float y) {
-      std::cout << " validating point (" << x << ", " << y << ")  [(" << t_rect.left << ", " << t_rect.top << ") (" << t_rect.width << ", " << t_rect.height << ")] [(" << bounds.left << ", " << bounds.top << ") (" << bounds.width << ", " << bounds.height << ")]\n";
-
+    auto validate = [&t_rect, &bounds](const float x, const float y) {
       return    t_rect.left <= x && t_rect.top <= y && (t_rect.left + t_rect.width) >= x && (t_rect.top + t_rect.height) >= y
              && bounds.left <= x && bounds.top <= y && (bounds.left + bounds.width) >= x && (bounds.top + bounds.height) >= y;
     };
 
-    if (t_rect.contains(p1))
+    auto edgeX = [&t_rect](const sf::Vector2f &t_p1, const sf::Vector2f &t_p2)
     {
-      std::cout << " contains p1 only (" << p1.x << ", " << p1.y << ")\n";
-      float possibleX = [this, &t_rect](){
-        if (p2.x > p1.x) { //moving left to right
-          return (t_rect.left + t_rect.width) - std::numeric_limits<float>::epsilon() * 100; // try right edge
-        } else {
-          return t_rect.left; // try left edge
-        }
-      }();
+      if (t_p2.x > t_p1.x) { //moving left to right
+        return (t_rect.left + t_rect.width) - std::numeric_limits<float>::epsilon(); // try right edge
+      } else {
+        return t_rect.left; // try left edge
+      }
+    };
 
-      float possibleY = [this, &t_rect](){
-        if (p2.y > p1.y) { // moving top to bottom
-          return (t_rect.top + t_rect.height) - std::numeric_limits<float>::epsilon() * 100; // try bottom edge
-        } else {
-          return t_rect.top; // try top edge
-        }
-      }();
+    auto edgeY = [&t_rect](const sf::Vector2f &t_p1, const sf::Vector2f &t_p2)
+    {
+      if (t_p2.y > t_p1.y) { // moving top to bottom
+        return (t_rect.top + t_rect.height) - std::numeric_limits<float>::epsilon(); // try bottom edge
+      } else {
+        return t_rect.top; // try top edge
+      }
+    };
+
+    if (containsP1)
+    {
+      auto possibleX = edgeX(p1, p2);
+      auto possibleY = edgeY(p1, p2);
 
       if (validate(x(possibleY), possibleY)) {
         return LineSegment(p1, sf::Vector2f(x(possibleY), possibleY));
@@ -126,24 +124,10 @@ struct LineSegment
       }
     }
 
-    if (t_rect.contains(p2))
+    if (containsP2)
     {
-      std::cout << " contains p2 only (" << p2.x << ", " << p2.y << ")\n";
-      float possibleX = [this, &t_rect](){
-        if (p1.x > p2.x) { //moving left to right
-          return (t_rect.left + t_rect.width) - std::numeric_limits<float>::epsilon() * 100; // try right edge
-        } else {
-          return t_rect.left; // try left edge
-        }
-      }();
-
-      float possibleY = [this, &t_rect](){
-        if (p1.y > p2.y) { // moving top to bottom
-          return (t_rect.top + t_rect.height) - std::numeric_limits<float>::epsilon() * 100; // try bottom edge
-        } else {
-          return t_rect.top; // try top edge
-        }
-      }();
+      auto possibleX = edgeX(p2, p1);
+      auto possibleY = edgeY(p2, p1);
 
       if (validate(x(possibleY), possibleY)) {
         return LineSegment(sf::Vector2f(x(possibleY), possibleY), p2);
@@ -155,26 +139,8 @@ struct LineSegment
     }
 
     // it contains neither, so let's now try to figure it out
-    float possibleX1;
-    float possibleY1;
-    float possibleX2;
-    float possibleY2;
-
-    if (p2.x > p1.x) { // moving left to right
-      possibleX1 = t_rect.left; // left edge
-      possibleX2 = (t_rect.left + t_rect.width) - std::numeric_limits<float>::epsilon(); // right
-    } else {
-      possibleX1 = (t_rect.left + t_rect.width) - std::numeric_limits<float>::epsilon();
-      possibleX2 = t_rect.left;
-    }
-
-    if (p2.y > p1.y) { // moving top to bottom
-      possibleY1 = t_rect.top;
-      possibleY2 = (t_rect.top + t_rect.height) - std::numeric_limits<float>::epsilon();
-    } else {
-      possibleY1 = (t_rect.top + t_rect.height) - std::numeric_limits<float>::epsilon();
-      possibleY2 = t_rect.top;
-    }
+    auto possibleX1 = edgeX(p1, p2);
+    auto possibleY1 = edgeY(p1, p2);
 
     sf::Vector2f resultP1;
     if (validate(x(possibleY1), possibleY1)) {
@@ -184,6 +150,9 @@ struct LineSegment
     } else {
       return LineSegment(); // no possible match
     }
+
+    auto possibleX2 = edgeX(p2, p1);
+    auto possibleY2 = edgeY(p2, p1);
 
     sf::Vector2f resultP2;
     if (validate(x(possibleY2), possibleY2)) {
@@ -326,14 +295,12 @@ class TileMap : public sf::Drawable, public sf::Transformable
       auto movementBounds = sf::FloatRect(std::min(center.x, endCenter.x)-1, std::min(center.y, endCenter.y)-1, distance.x+2, distance.y+2);
 
       auto segment = LineSegment(center, endCenter);
-      std::cout << "orig segment: (" << segment.p1.x << ", " << segment.p1.y << ") (" << segment.p2.x << ", " << segment.p2.y << ")\n";
 
       std::vector<std::tuple<std::reference_wrapper<TileData>, LineSegment, float>> segments;
       for (auto &data : m_tileData)
       {
         if (data.bounds.intersects(movementBounds))
         {
-          std::cout << " checking tile: (" << data.bounds.left << ", " << data.bounds.top << ") (" << data.bounds.width << ", " << data.bounds.height << ")\n";
           // this is a potential box that we've passed through
           if (auto passedSegment = segment.clipTo(data.bounds))
           {
@@ -353,19 +320,15 @@ class TileMap : public sf::Drawable, public sf::Transformable
 
       auto totalLength = segment.length();
 
-      if (segments.size() > 1) std::cout << "Saw " << segments.size() <<  " segments in one move!!!\n";
 
       auto total = 0.0;
       // segments should now contain a sorted list of tiles that this movement passes through
       for (auto &curSegment : segments)
       {
-        auto segment = std::get<1>(curSegment);
-        std::cout << "segment: (" << segment.p1.x << ", " << segment.p1.y << ") (" << segment.p2.x << ", " << segment.p2.y << ")\n";
         auto length = std::get<1>(curSegment).length();
         auto percent = totalLength==0?1:(length / totalLength);
         total += percent;
 
-        std::cout << "Length: " << length << " total length: " << totalLength << " proportion " << percent << '\n';
         std::get<0>(curSegment).get().properties.movementAction(t_time * percent, length);
       }
 
