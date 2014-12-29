@@ -4,6 +4,38 @@
 #include <chrono>
 #include <functional>
 #include <cassert>
+#include <cmath>
+
+class Object : public sf::Sprite
+{
+  public:
+    Object(const std::string &t_filename, const int width, const int height, const float fps)
+      : m_width(width), m_height(height), m_fps(fps)
+    {
+      m_texture.loadFromFile(t_filename);
+      setTexture(m_texture);
+      setTextureRect(sf::IntRect(0,0,width,height));
+      m_numFrames = m_texture.getSize().x / width;
+    }
+
+    void update(const float t_gameTime, const float /*t_timeElapsed*/)
+    {
+      auto i = 0.0f;
+      const auto remainder = modff(t_gameTime, &i);
+      const auto secondsPerFrame = 1/m_fps;
+      const auto curStep = int(remainder / secondsPerFrame);
+      const auto curFrame = curStep % m_numFrames;
+      assert(curFrame >= 0 && curFrame < m_numFrames);
+      setTextureRect(sf::IntRect(m_width * curFrame, 0, m_width, m_height));
+    }
+
+  private:
+    int m_width;
+    int m_height;
+    int m_numFrames;
+    float m_fps;
+    sf::Texture m_texture;
+};
 
 struct TileProperties
 {
@@ -251,6 +283,11 @@ class TileMap : public sf::Drawable, public sf::Transformable
       return true;
     }
 
+    void addObject(const Object &t_o)
+    {
+      m_objects.push_back(t_o);
+    }
+
     bool testMove(const sf::Sprite &t_s, const sf::Vector2f &distance) const
     {
       auto newBoundingBox = sf::Transform().translate(distance).transformRect(t_s.getGlobalBounds());
@@ -336,6 +373,25 @@ class TileMap : public sf::Drawable, public sf::Transformable
       assert(total <= 1.001);
     }
 
+    void update(const float t_gameTime, const float t_timeElapsed)
+    {
+      for (auto &obj : m_objects)
+      {
+        obj.update(t_gameTime, t_timeElapsed);
+      }
+    }
+
+    template<typename T>
+      void draw(T &target)
+      {
+        target.draw(*this);
+
+        for (auto &obj : m_objects)
+        {
+          target.draw(obj);
+        }
+      }
+
   private:
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
@@ -348,12 +404,14 @@ class TileMap : public sf::Drawable, public sf::Transformable
 
       // draw the vertex array
       target.draw(m_vertices, states);
+
     }
 
     sf::VertexArray m_vertices;
     sf::Texture m_tileset;
     std::vector<TileData> m_tileData;
     std::map<int, TileProperties> m_mapDefaults;
+    std::vector<Object> m_objects;
 };
 
 int main()
@@ -366,7 +424,6 @@ int main()
 
   sf::Sprite stickMan(spritetexture);
   stickMan.setPosition(200, 200);
-
 
   // define the level with an array of tile indices
   const int level[] =
@@ -396,8 +453,14 @@ int main()
   if (!map.load("tileset.png", sf::Vector2u(32, 32), level, 32, 16))
     return -1;
 
+  auto start_time = std::chrono::steady_clock::now();
+
   auto last_frame = std::chrono::steady_clock::now();
   uint64_t frame_count = 0;
+
+  Object candle("candle.png", 32, 32, 3);
+  candle.setPosition(100,200);
+  map.addObject(candle);
 
   // run the main loop
   while (window.isOpen())
@@ -405,6 +468,7 @@ int main()
     ++frame_count;
     auto cur_frame = std::chrono::steady_clock::now();
     auto time_elapsed = std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - last_frame).count();
+    auto game_time =  std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - start_time).count();
     last_frame = cur_frame;
 
     if (frame_count % 100 == 0)
@@ -450,7 +514,8 @@ int main()
 
     // draw the map
     window.clear();
-    window.draw(map);
+    map.update(game_time, time_elapsed);
+    map.draw(window);
     window.draw(stickMan);
 
     sf::View miniView(sf::FloatRect(0,0,1024,512));
@@ -459,7 +524,7 @@ int main()
 
     // draw the map
     window.draw(map);
-    window.draw(stickMan);
+    map.draw(window);
     window.display();
   }
 
