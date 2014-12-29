@@ -93,13 +93,12 @@ class Message_Box : public Game_Event
 class Object : public sf::Sprite
 {
   public:
-    Object(const std::string &t_filename, const int width, const int height, const float fps)
-      : m_width(width), m_height(height), m_fps(fps)
+    Object(const sf::Texture &t_texture, const int width, const int height, const float fps)
+      : m_texture(std::cref(t_texture)), m_width(width), m_height(height), m_fps(fps)
     {
-      m_texture.loadFromFile(t_filename);
       setTexture(m_texture);
       setTextureRect(sf::IntRect(0,0,width,height));
-      m_num_frames = m_texture.getSize().x / width;
+      m_num_frames = m_texture.get().getSize().x / width;
     }
 
     virtual ~Object() = default;
@@ -116,11 +115,11 @@ class Object : public sf::Sprite
     }
 
   private:
+    std::reference_wrapper<const sf::Texture> m_texture;
     int m_width;
     int m_height;
     int m_num_frames;
     float m_fps;
-    sf::Texture m_texture;
 };
 
 struct Tile_Properties
@@ -308,22 +307,20 @@ struct Tile_Data
   sf::FloatRect bounds;
 };
 
-class TileMap : public sf::Drawable, public sf::Transformable
+class Tile_Map : public sf::Drawable, public sf::Transformable
 {
   public:
-    TileMap(std::map<int, Tile_Properties> t_map_defaults)
-      : m_map_defaults(std::move(t_map_defaults))
+    Tile_Map(const sf::Texture &t_tileset,
+            const sf::Vector2u &t_tileSize, const int *tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
+      : m_tileset(std::cref(t_tileset)), m_map_defaults(std::move(t_map_defaults))
     {
+      load(t_tileSize, tiles, width, height);
     }
 
-    virtual ~TileMap() = default;
+    virtual ~Tile_Map() = default;
 
-    bool load(const std::string& tileset, sf::Vector2u tileSize, const int* tiles, const unsigned int width, const unsigned int height)
+    bool load(sf::Vector2u tileSize, const int* tiles, const unsigned int width, const unsigned int height)
     {
-      // load the tileset texture
-      if (!m_tileset.loadFromFile(tileset))
-        return false;
-
       // resize the vertex array to fit the level size
       m_vertices.setPrimitiveType(sf::Quads);
       m_vertices.resize(width * height * 4);
@@ -350,8 +347,8 @@ class TileMap : public sf::Drawable, public sf::Transformable
           m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * tileSize.x, j * tileSize.y, tileSize.x, tileSize.y));
 
           // find its position in the tileset texture
-          const auto tu = tileNumber % (m_tileset.getSize().x / tileSize.x);
-          const auto tv = tileNumber / (m_tileset.getSize().x / tileSize.x);
+          const auto tu = tileNumber % (m_tileset.get().getSize().x / tileSize.x);
+          const auto tv = tileNumber / (m_tileset.get().getSize().x / tileSize.x);
 
           // get a pointer to the current tile's quad
           auto quad = &m_vertices[(i + j * width) * 4];
@@ -375,7 +372,7 @@ class TileMap : public sf::Drawable, public sf::Transformable
       return true;
     }
 
-    void addObject(const Object &t_o)
+    void add_object(const Object &t_o)
     {
       m_objects.push_back(t_o);
     }
@@ -481,7 +478,7 @@ class TileMap : public sf::Drawable, public sf::Transformable
       states.transform *= getTransform();
 
       // apply the tileset texture
-      states.texture = &m_tileset;
+      states.texture = &m_tileset.get();
 
       // draw the vertex array
       target.draw(m_vertices, states);
@@ -493,10 +490,54 @@ class TileMap : public sf::Drawable, public sf::Transformable
     }
 
     sf::VertexArray m_vertices;
-    sf::Texture m_tileset;
+    std::reference_wrapper<const sf::Texture> m_tileset;
     std::vector<Tile_Data> m_tile_data;
     std::map<int, Tile_Properties> m_map_defaults;
     std::vector<Object> m_objects;
+};
+
+class Game
+{
+  public:
+    const sf::Texture &get_texture(const std::string &t_filename) const
+    {
+      auto texture_itr = m_textures.find(t_filename);
+      if (texture_itr != m_textures.end())
+      {
+        return texture_itr->second;
+      } else {
+        sf::Texture texture;
+        if (!texture.loadFromFile(t_filename))
+        {
+          throw std::runtime_error("Unable to load texture: " + t_filename);
+        }
+        auto itr = m_textures.emplace(t_filename, std::move(texture));
+        return itr.first->second;
+      }
+    }
+
+    const sf::Font &get_font(const std::string &t_filename) const
+    {
+      auto font_itr = m_fonts.find(t_filename);
+      if (font_itr != m_fonts.end())
+      {
+        return font_itr->second;
+      } else {
+        sf::Font font;
+        if (!font.loadFromFile(t_filename))
+        {
+          throw std::runtime_error("Unable to load font: " + t_filename);
+        }
+        auto itr = m_fonts.emplace(t_filename, std::move(font));
+        return itr.first->second;
+      }
+    }
+
+
+  private:
+
+    mutable std::map<std::string, sf::Texture> m_textures;
+    mutable std::map<std::string, sf::Font> m_fonts;
 };
 
 int main()
@@ -504,10 +545,9 @@ int main()
   // create the window
   sf::RenderWindow window(sf::VideoMode(512, 256), "Tilemap");
 
-  sf::Texture spritetexture;
-  spritetexture.loadFromFile("sprite.png");
+  Game game;
 
-  sf::Sprite stickMan(spritetexture);
+  sf::Sprite stickMan(game.get_texture("sprite.png"));
   stickMan.setPosition(200, 200);
 
   // define the level with an array of tile indices
@@ -533,35 +573,25 @@ int main()
   };
 
   // create the tilemap from the level definition
-  TileMap map({{1, Tile_Properties(false)}});
-
-  if (!map.load("tileset.png", sf::Vector2u(32, 32), level, 32, 16))
-    return -1;
+  Tile_Map map(game.get_texture("tileset.png"), sf::Vector2u(32, 32), level, 32, 16, {{1, Tile_Properties(false)}});
 
   auto start_time = std::chrono::steady_clock::now();
 
   auto last_frame = std::chrono::steady_clock::now();
   uint64_t frame_count = 0;
 
-  Object candle("candle.png", 32, 32, 3);
+  Object candle(game.get_texture("candle.png"), 32, 32, 3);
   candle.setPosition(100,200);
-  map.addObject(candle);
+  map.add_object(candle);
 
-  Object candle2("candle.png", 32, 32, 3);
+  Object candle2(game.get_texture("candle.png"), 32, 32, 3);
   candle2.setPosition(150,200);
-  map.addObject(candle2);
-
-  sf::Font font;
-  if (!font.loadFromFile("FreeMonoBold.ttf"))
-  {
-    std::cout << "Unable to load font\n";
-    exit(-1);
-  }
+  map.add_object(candle2);
 
   sf::View fixed = window.getView();
 
   std::deque<std::unique_ptr<Game_Event>> game_events;
-  game_events.emplace_back(new Message_Box(sf::FloatRect(10,10,fixed.getSize().x-20,fixed.getSize().y-20), "Welcome to the Game!\nPress enter to continue.", font, 20, sf::Color(0,0,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+  game_events.emplace_back(new Message_Box(sf::FloatRect(10,10,fixed.getSize().x-20,fixed.getSize().y-20), "Welcome to the Game!\nPress enter to continue.", game.get_font("FreeMonoBold.ttf"), 20, sf::Color(0,0,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
 
   // run the main loop
   while (window.isOpen())
