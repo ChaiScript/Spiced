@@ -3,8 +3,93 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
+#include <deque>
+#include <memory>
 #include <cassert>
 #include <cmath>
+
+class GameEvent : public sf::Drawable, public sf::Transformable
+{
+  public:
+    GameEvent(const sf::FloatRect &t_location)
+      : m_size(sf::Vector2f(t_location.width, t_location.height))
+    {
+      setPosition(t_location.left, t_location.top);
+    }
+
+    virtual ~GameEvent() = default;
+
+    virtual bool isDone() const = 0;
+
+    virtual void update(const float t_gameTime, const float t_timeElapsed) = 0;
+
+
+    const sf::Vector2f &getSize() const
+    {
+      return m_size;
+    }
+
+  private:
+    sf::Vector2f m_size;
+};
+
+class MessageBox : public GameEvent
+{
+  public:
+    MessageBox(sf::FloatRect t_location, sf::String t_string, sf::Font t_font, int t_fontSize,
+        sf::Color t_fontColor, sf::Color t_fillColor, sf::Color t_outlineColor, float t_outlineThickness)
+      : GameEvent(std::move(t_location)),
+        m_string(std::move(t_string)), m_font(std::move(t_font)), m_fontColor(std::move(t_fontColor)), 
+        m_fillColor(std::move(t_fillColor)), m_outlineColor(std::move(t_outlineColor)),
+        m_outlineThickness(t_outlineThickness),
+        m_text(t_string, m_font, t_fontSize)
+    {
+      m_text.setColor(m_fontColor);
+    }
+
+    virtual ~MessageBox() = default;
+
+    virtual void update(const float /*t_gameTime*/, const float /*t_timeElapsed*/)
+    {
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+      {
+        m_isDone = true;
+      }
+    }
+
+    virtual bool isDone() const
+    {
+      return m_isDone;
+    }
+
+  protected:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+      // apply the transform
+      states.transform *= getTransform();
+
+      sf::RectangleShape rect(getSize());
+      rect.setFillColor(m_fillColor);
+      rect.setOutlineColor(m_outlineColor);
+      rect.setOutlineThickness(m_outlineThickness);
+
+      target.draw(rect, states);
+      target.draw(m_text, states);
+    }
+
+  private:
+    sf::String m_string;
+    sf::Font m_font;
+    sf::Color m_fontColor;
+    sf::Color m_fillColor;
+    sf::Color m_outlineColor;
+    float m_outlineThickness;
+    sf::Text m_text;
+
+    bool m_isDone = false;
+};
+
+
 
 class Object : public sf::Sprite
 {
@@ -17,6 +102,8 @@ class Object : public sf::Sprite
       setTextureRect(sf::IntRect(0,0,width,height));
       m_numFrames = m_texture.getSize().x / width;
     }
+
+    virtual ~Object() = default;
 
     void update(const float t_gameTime, const float /*t_timeElapsed*/)
     {
@@ -224,6 +311,8 @@ class TileMap : public sf::Drawable, public sf::Transformable
     {
     }
 
+    virtual ~TileMap() = default;
+
     bool load(const std::string& tileset, sf::Vector2u tileSize, const int* tiles, unsigned int width, unsigned int height)
     {
       // load the tileset texture
@@ -381,6 +470,7 @@ class TileMap : public sf::Drawable, public sf::Transformable
       }
     }
 
+    /*
     template<typename T>
       void draw(T &target)
       {
@@ -391,6 +481,7 @@ class TileMap : public sf::Drawable, public sf::Transformable
           target.draw(obj);
         }
       }
+*/
 
   private:
 
@@ -405,6 +496,10 @@ class TileMap : public sf::Drawable, public sf::Transformable
       // draw the vertex array
       target.draw(m_vertices, states);
 
+      for (auto &obj : m_objects)
+      {
+        target.draw(obj, states);
+      }
     }
 
     sf::VertexArray m_vertices;
@@ -462,6 +557,22 @@ int main()
   candle.setPosition(100,200);
   map.addObject(candle);
 
+  Object candle2("candle.png", 32, 32, 3);
+  candle2.setPosition(150,200);
+  map.addObject(candle2);
+
+  sf::Font font;
+  if (!font.loadFromFile("FreeMonoBold.ttf"))
+  {
+    std::cout << "Unable to load font\n";
+    exit(-1);
+  }
+
+  sf::View fixed = window.getView();
+
+  std::deque<std::unique_ptr<GameEvent>> gameEvents;
+  gameEvents.emplace_back(new MessageBox(sf::FloatRect(10,10,fixed.getSize().x-20,fixed.getSize().y-20), "Welcome to the Game!\nPress enter to continue.", font, 20, sf::Color(0,0,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+
   // run the main loop
   while (window.isOpen())
   {
@@ -469,12 +580,24 @@ int main()
     auto cur_frame = std::chrono::steady_clock::now();
     auto time_elapsed = std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - last_frame).count();
     auto game_time =  std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - start_time).count();
-    last_frame = cur_frame;
 
     if (frame_count % 100 == 0)
     {
-      std::cout << 1/time_elapsed << "fps\n";
+      std::cout << 1/time_elapsed << "fps avg fps: " << frame_count / game_time << '\n';
     }
+
+
+    if (!gameEvents.empty())
+    {
+      if (gameEvents.front()->isDone())
+      {
+        gameEvents.pop_front();
+      } else {
+        time_elapsed = 0; // pause simulation during game event
+      }
+    }
+
+    last_frame = cur_frame;
 
     // handle events
     sf::Event event;
@@ -515,7 +638,8 @@ int main()
     // draw the map
     window.clear();
     map.update(game_time, time_elapsed);
-    map.draw(window);
+//    map.draw(window);
+    window.draw(map);
     window.draw(stickMan);
 
     sf::View miniView(sf::FloatRect(0,0,1024,512));
@@ -524,7 +648,17 @@ int main()
 
     // draw the map
     window.draw(map);
-    map.draw(window);
+//    map.draw(window);
+
+
+    window.setView(fixed);
+
+    if (!gameEvents.empty())
+    {
+      gameEvents.front()->update(game_time, time_elapsed);
+      window.draw(*gameEvents.front());
+    }
+
     window.display();
   }
 
