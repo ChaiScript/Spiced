@@ -21,7 +21,6 @@ class Game_Event : public sf::Drawable, public sf::Transformable
 
     virtual void update(const float t_game_time, const float t_simulation_time) = 0;
 
-  private:
 };
 
 class Queued_Action : public Game_Event
@@ -29,8 +28,7 @@ class Queued_Action : public Game_Event
   public:
     Queued_Action(std::function<void ()> t_action)
       : m_action(std::move(t_action))
-    {
-    }
+    { }
 
     virtual void update(const float, const float)
     {
@@ -44,8 +42,7 @@ class Queued_Action : public Game_Event
     }
 
     virtual void draw(sf::RenderTarget& /*target*/, sf::RenderStates /*states*/) const
-    {
-    }
+    { /*nothing to do*/ }
 
   private:
     bool m_done = false;
@@ -203,7 +200,7 @@ struct Line_Segment
     return valid;
   }
 
-  float distanceToP1(const sf::Vector2f &t_point) const
+  float distance_to_p1(const sf::Vector2f &t_point) const
   {
     return sqrtf( (t_point.x - p1.x) * (t_point.x - p1.x) + (t_point.y - p1.y) * (t_point.y - p1.y) );
   }
@@ -428,9 +425,10 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
       m_objects.push_back(t_o);
     }
 
-    bool testMove(const sf::Sprite &t_s, const sf::Vector2f &distance) const
+    bool test_move(const sf::Sprite &t_s, const sf::Vector2f &distance) const
     {
       auto newBoundingBox = sf::Transform().translate(distance).transformRect(t_s.getGlobalBounds());
+      newBoundingBox = sf::FloatRect(newBoundingBox.left + .05f, newBoundingBox.top + .05f, newBoundingBox.width - .10f, newBoundingBox.height - .10f);
 
       for (const auto &data : m_tile_data)
       {
@@ -445,17 +443,17 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 
     sf::Vector2f adjust_move(const sf::Sprite &t_s, const sf::Vector2f &distance) const
     {
-      if (testMove(t_s, distance)) {
+      if (test_move(t_s, distance)) {
         return distance;
       }
 
-      auto xOnly = sf::Vector2f(distance.x, 0);
-      if (testMove(t_s, xOnly)) {
+      const auto xOnly = sf::Vector2f(distance.x, 0);
+      if (test_move(t_s, xOnly)) {
         return xOnly;
       }
 
-      auto yOnly = sf::Vector2f(distance.y, 0);
-      if (testMove(t_s, yOnly)) {
+      const auto yOnly = sf::Vector2f(0, distance.y);
+      if (test_move(t_s, yOnly)) {
         return yOnly;
       }
 
@@ -482,7 +480,7 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
           if (auto passedSegment = segment.clipTo(data.bounds))
           {
             // it's a valid segment
-            segments.push_back(std::make_tuple(std::ref(data), passedSegment, passedSegment.distanceToP1(center)));
+            segments.push_back(std::make_tuple(std::ref(data), passedSegment, passedSegment.distance_to_p1(center)));
           }
         }
       }
