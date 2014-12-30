@@ -11,10 +11,8 @@
 class Game_Event : public sf::Drawable, public sf::Transformable
 {
   public:
-    Game_Event(const sf::FloatRect &t_location)
-      : m_size(sf::Vector2f(t_location.width, t_location.height))
+    Game_Event()
     {
-      setPosition(t_location.left, t_location.top);
     }
 
     virtual ~Game_Event() = default;
@@ -23,34 +21,59 @@ class Game_Event : public sf::Drawable, public sf::Transformable
 
     virtual void update(const float t_game_time, const float t_simulation_time) = 0;
 
-    const sf::Vector2f &get_size() const
+  private:
+};
+
+class Queued_Action : public Game_Event
+{
+  public:
+    Queued_Action(std::function<void ()> t_action)
+      : m_action(std::move(t_action))
     {
-      return m_size;
+    }
+
+    virtual void update(const float, const float)
+    {
+      m_action();
+      m_done = true;
+    }
+
+    virtual bool is_done() const
+    {
+      return m_done;
+    }
+
+    virtual void draw(sf::RenderTarget& /*target*/, sf::RenderStates /*states*/) const
+    {
     }
 
   private:
-    sf::Vector2f m_size;
+    bool m_done = false;
+    std::function<void ()> m_action;
 };
 
 class Message_Box : public Game_Event
 {
   public:
-    Message_Box(sf::FloatRect t_location, sf::String t_string, sf::Font t_font, int t_fontSize,
+    Message_Box(sf::String t_string, sf::Font t_font, int t_fontSize,
         sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness)
-      : Game_Event(std::move(t_location)),
+      : Game_Event(),
         m_string(std::move(t_string)), m_font(std::move(t_font)), m_font_color(std::move(t_font_color)), 
         m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
         m_outline_thickness(t_outlineThickness),
         m_text(t_string, m_font, t_fontSize)
     {
+      setPosition(10,10);
       m_text.setColor(m_font_color);
     }
 
     virtual ~Message_Box() = default;
 
-    virtual void update(const float /*t_game_time*/, const float /*t_simulation_time*/)
+    virtual void update(const float t_game_time, const float /*t_simulation_time*/)
     {
-      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+      if (m_start_time == 0) m_start_time = t_game_time;
+
+      if (t_game_time - m_start_time >= 1 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
       {
         m_is_done = true;
       }
@@ -64,10 +87,14 @@ class Message_Box : public Game_Event
   protected:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
+      auto size = target.getView().getSize();
+      size.x -= 20;
+      size.y -= 20;
+
       // apply the transform
       states.transform *= getTransform();
 
-      sf::RectangleShape rect(get_size());
+      sf::RectangleShape rect(size);
       rect.setFillColor(m_fill_color);
       rect.setOutlineColor(m_outline_color);
       rect.setOutlineThickness(m_outline_thickness);
@@ -85,6 +112,7 @@ class Message_Box : public Game_Event
     float m_outline_thickness;
     sf::Text m_text;
 
+    float m_start_time = 0;
     bool m_is_done = false;
 };
 
@@ -307,11 +335,13 @@ struct Tile_Data
   sf::FloatRect bounds;
 };
 
+class Game;
+
 class Tile_Map : public sf::Drawable, public sf::Transformable
 {
   public:
     Tile_Map(const sf::Texture &t_tileset,
-            const sf::Vector2u &t_tileSize, const int *tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
+            const sf::Vector2u &t_tileSize, const std::vector<int> &tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
       : m_tileset(std::cref(t_tileset)), m_map_defaults(std::move(t_map_defaults))
     {
       load(t_tileSize, tiles, width, height);
@@ -319,7 +349,20 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 
     virtual ~Tile_Map() = default;
 
-    bool load(sf::Vector2u tileSize, const int* tiles, const unsigned int width, const unsigned int height)
+    void add_enter_action(const std::function<void (Game &)> t_action)
+    {
+      m_enter_actions.push_back(t_action);
+    }
+
+    void enter(Game &t_game)
+    {
+      for (auto &action : m_enter_actions)
+      {
+        action(t_game);
+      }
+    }
+
+    bool load(sf::Vector2u tileSize, const std::vector<int> &tiles, const unsigned int width, const unsigned int height)
     {
       // resize the vertex array to fit the level size
       m_vertices.setPrimitiveType(sf::Quads);
@@ -392,7 +435,7 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
       return true;
     }
 
-    sf::Vector2f adjustMove(const sf::Sprite &t_s, const sf::Vector2f &distance) const
+    sf::Vector2f adjust_move(const sf::Sprite &t_s, const sf::Vector2f &distance) const
     {
       if (testMove(t_s, distance)) {
         return distance;
@@ -494,11 +537,18 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
     std::vector<Tile_Data> m_tile_data;
     std::map<int, Tile_Properties> m_map_defaults;
     std::vector<Object> m_objects;
+    std::vector<std::function<void (Game &)>> m_enter_actions;
 };
 
-class Game
+class Game : public sf::Drawable
 {
   public:
+    Game()
+      : m_map(m_maps.end())
+    {
+    }
+
+
     const sf::Texture &get_texture(const std::string &t_filename) const
     {
       auto texture_itr = m_textures.find(t_filename);
@@ -514,6 +564,27 @@ class Game
         auto itr = m_textures.emplace(t_filename, std::move(texture));
         return itr.first->second;
       }
+    }
+
+    void teleport_to(const float x, const float y)
+    {
+      m_avatar.setPosition(x, y);
+    }
+
+    void set_avatar(const sf::Sprite &t_avatar)
+    {
+      m_avatar = t_avatar;
+    }
+
+    void add_map(const std::string &t_name, const Tile_Map &t_map)
+    {
+      auto itr = m_maps.emplace(t_name, t_map);
+      if (!itr.second) throw std::runtime_error("Map '" + t_name + "' already exists");
+    }
+
+    void add_start_action(const std::function<void (Game &)> &t_action)
+    {
+      m_start_actions.push_back(t_action);
     }
 
     const sf::Font &get_font(const std::string &t_filename) const
@@ -533,26 +604,143 @@ class Game
       }
     }
 
+    void add_queued_action(const std::function<void (Game &)> &t_action)
+    {
+      m_game_events.emplace_back(new Queued_Action([this, t_action](){ t_action(*this); }));
+    }
+
+    void show_message_box(const sf::String &t_msg)
+    {
+      m_game_events.emplace_back(new Message_Box(t_msg, get_font("FreeMonoBold.ttf"), 20, sf::Color(0,0,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+    }
+
+    bool has_pending_events() const
+    {
+      return !m_game_events.empty();
+    }
+
+    Game_Event &get_current_event() const
+    {
+      if (m_game_events.empty())
+      {
+        throw std::runtime_error("No pending event!");
+      }
+
+      return *m_game_events.front();
+    }
+
+    void update(const float t_game_time, const float t_simulation_time)
+    {
+      float simulation_time = t_simulation_time;
+
+      if (has_pending_events())
+      {
+        if (m_game_events.front()->is_done())
+        {
+          m_game_events.pop_front();
+        } else {
+          simulation_time = 0; // pause simulation during game event
+        }
+      }
+
+      if (m_map != m_maps.end())
+      {
+        auto &map = m_map->second;
+        auto distance = map.adjust_move(m_avatar, Game::get_input_direction_vector() * 20.0f * simulation_time);
+        map.do_move(simulation_time, m_avatar, distance);
+        map.update(t_game_time, simulation_time);
+        m_avatar.move(distance);
+      }
+
+      if (!m_game_events.empty())
+      {
+        m_game_events.front()->update(t_game_time, t_simulation_time);
+      }
+    }
+
+    static sf::Vector2f get_input_direction_vector()
+    {
+      sf::Vector2f velocity(0,0);
+
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+      {
+        velocity += sf::Vector2f(-1, 0);
+      }
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+      {
+        velocity += sf::Vector2f(1, 0);
+      }
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+      {
+        velocity += sf::Vector2f(0, -1);
+      }
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+      {
+        velocity += sf::Vector2f(0, 1);
+      }
+
+      velocity += sf::Vector2f(sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::X)/100, sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::Y)/100);
+
+      if (velocity.x >  1.0) velocity.x =  1.0;
+      if (velocity.x < -1.0) velocity.x = -1.0;
+      if (velocity.y >  1.0) velocity.y =  1.0;
+      if (velocity.y < -1.0) velocity.y = -1.0;
+
+      return velocity;
+    }
+
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+      if (m_map != m_maps.end())
+      {
+        target.draw(m_map->second, states);
+      }
+
+      target.draw(m_avatar, states);
+    }
+
+
+    sf::Vector2f get_avatar_position() const
+    {
+      return m_avatar.getPosition();
+    }
+
+    void enter_map(const std::string &t_name)
+    {
+      m_map = m_maps.find(t_name);
+
+      if (m_map != m_maps.end())
+      {
+        m_map->second.enter(*this);
+      }
+    }
+
+    void start()
+    {
+      for (auto &action : m_start_actions)
+      {
+        action(*this);
+      }
+    }
 
   private:
 
     mutable std::map<std::string, sf::Texture> m_textures;
     mutable std::map<std::string, sf::Font> m_fonts;
+
+    std::deque<std::unique_ptr<Game_Event>> m_game_events;
+    std::map<std::string, Tile_Map> m_maps;
+
+    sf::Sprite m_avatar;
+    std::map<std::string, Tile_Map>::iterator m_map;
+    std::vector<std::function<void (Game &)>> m_start_actions;
 };
 
-int main()
+Game build_game()
 {
-  // create the window
-  sf::RenderWindow window(sf::VideoMode(512, 256), "Tilemap");
-
   Game game;
-
-  sf::Sprite stickMan(game.get_texture("sprite.png"));
-  stickMan.setPosition(200, 200);
-
   // define the level with an array of tile indices
-  const int level[] =
-  {
+  const std::vector<int> level {
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0,
     1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -569,16 +757,10 @@ int main()
     0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0,
     2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1, 2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1,
     0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1,
-
   };
 
   // create the tilemap from the level definition
   Tile_Map map(game.get_texture("tileset.png"), sf::Vector2u(32, 32), level, 32, 16, {{1, Tile_Properties(false)}});
-
-  auto start_time = std::chrono::steady_clock::now();
-
-  auto last_frame = std::chrono::steady_clock::now();
-  uint64_t frame_count = 0;
 
   Object candle(game.get_texture("candle.png"), 32, 32, 3);
   candle.setPosition(100,200);
@@ -588,10 +770,45 @@ int main()
   candle2.setPosition(150,200);
   map.add_object(candle2);
 
+  map.add_enter_action(
+      [](Game &t_game){
+        t_game.teleport_to(200, 200);
+        t_game.show_message_box("Welcome to 'map.'");
+      }
+    );
+
+  game.add_map("map", map);
+  sf::Sprite m_avatar(game.get_texture("sprite.png"));
+  game.set_avatar(m_avatar);
+
+  game.add_start_action(
+      [](Game &t_game) {
+        t_game.show_message_box("Welcome to the Game!");
+        t_game.add_queued_action([](Game &t_game) {
+          t_game.enter_map("map");
+          });
+      }
+    );
+
+  return game;
+}
+
+int main()
+{
+  // create the window
+  sf::RenderWindow window(sf::VideoMode(512, 256), "Tilemap");
+
+
+  auto game = build_game();
+
+  auto start_time = std::chrono::steady_clock::now();
+
+  auto last_frame = std::chrono::steady_clock::now();
+  uint64_t frame_count = 0;
+
   sf::View fixed = window.getView();
 
-  std::deque<std::unique_ptr<Game_Event>> game_events;
-  game_events.emplace_back(new Message_Box(sf::FloatRect(10,10,fixed.getSize().x-20,fixed.getSize().y-20), "Welcome to the Game!\nPress enter to continue.", game.get_font("FreeMonoBold.ttf"), 20, sf::Color(0,0,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+  game.start();
 
   // run the main loop
   while (window.isOpen())
@@ -606,19 +823,7 @@ int main()
       std::cout << 1/time_elapsed << "fps avg fps: " << frame_count / game_time << '\n';
     }
 
-
-    if (!game_events.empty())
-    {
-      if (game_events.front()->is_done())
-      {
-        game_events.pop_front();
-      } else {
-        time_elapsed = 0; // pause simulation during game event
-      }
-    }
-
     last_frame = cur_frame;
-
     // handle events
     sf::Event event;
     while (window.pollEvent(event))
@@ -627,54 +832,28 @@ int main()
         window.close();
     }
 
-    sf::Vector2f velocity(0,0);
+    game.update(game_time, time_elapsed);
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-    {
-      velocity += sf::Vector2f(-10, 0);
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-    {
-      velocity += sf::Vector2f(10, 0);
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-    {
-      velocity += sf::Vector2f(0, -10);
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-    {
-      velocity += sf::Vector2f(0, 10);
-    }
-
-    velocity += sf::Vector2f(sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::X)/100 * 20, sf::Joystick::getAxisPosition(2, sf::Joystick::Axis::Y)/100 * 20);
-
-    auto distance = map.adjustMove(stickMan, velocity * time_elapsed);
-    map.do_move(time_elapsed, stickMan, distance);
-    stickMan.move(distance);
-
-    sf::View mainView(stickMan.getPosition(), sf::Vector2f(512,256));
+    sf::View mainView(game.get_avatar_position(), sf::Vector2f(512,256));
     window.setView(mainView);
 
-    // draw the map
     window.clear();
-    map.update(game_time, time_elapsed);
-    window.draw(map);
-    window.draw(stickMan);
 
+    // main frame
+    window.draw(game);
+
+    // mini view
     sf::View miniView(sf::FloatRect(0,0,1024,512));
     miniView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
     window.setView(miniView);
+    window.draw(game);
 
-    // draw the map
-    window.draw(map);
-
-
+    // fixed overlays
     window.setView(fixed);
 
-    if (!game_events.empty())
+    if (game.has_pending_events())
     {
-      game_events.front()->update(game_time, time_elapsed);
-      window.draw(*game_events.front());
+      window.draw(game.get_current_event());
     }
 
     window.display();
