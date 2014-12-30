@@ -341,10 +341,10 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 {
   public:
     Tile_Map(const sf::Texture &t_tileset,
-            const sf::Vector2u &t_tileSize, const std::vector<int> &tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
+            const sf::Vector2u &t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
       : m_tileset(std::cref(t_tileset)), m_map_defaults(std::move(t_map_defaults))
     {
-      load(t_tileSize, tiles, width, height);
+      load(t_tile_size, tiles, width, height);
     }
 
     virtual ~Tile_Map() = default;
@@ -362,12 +362,20 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
       }
     }
 
-    bool load(sf::Vector2u tileSize, const std::vector<int> &tiles, const unsigned int width, const unsigned int height)
+    sf::Vector2u dimensions_in_pixels() const
+    {
+      return sf::Vector2u(m_tile_size.x * m_map_size.x, m_tile_size.y * m_map_size.y);
+    }
+
+
+    bool load(sf::Vector2u t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height)
     {
       // resize the vertex array to fit the level size
       m_vertices.setPrimitiveType(sf::Quads);
       m_vertices.resize(width * height * 4);
       m_tile_data.reserve(width * height);
+      m_map_size = sf::Vector2u(width, height);
+      m_tile_size = t_tile_size;
 
       // populate the vertex array, with one quad per tile
       for (unsigned int i = 0; i < width; ++i)
@@ -387,28 +395,28 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
             }
           };
 
-          m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * tileSize.x, j * tileSize.y, tileSize.x, tileSize.y));
+          m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * t_tile_size.x, j * t_tile_size.y, t_tile_size.x, t_tile_size.y));
 
           // find its position in the tileset texture
-          const auto tu = tileNumber % (m_tileset.get().getSize().x / tileSize.x);
-          const auto tv = tileNumber / (m_tileset.get().getSize().x / tileSize.x);
+          const auto tu = tileNumber % (m_tileset.get().getSize().x / t_tile_size.x);
+          const auto tv = tileNumber / (m_tileset.get().getSize().x / t_tile_size.x);
 
           // get a pointer to the current tile's quad
           auto quad = &m_vertices[(i + j * width) * 4];
 
 
           // define its 4 corners
-          quad[0].position = sf::Vector2f(i * tileSize.x, j * tileSize.y);
-          quad[1].position = sf::Vector2f((i + 1) * tileSize.x, j * tileSize.y);
-          quad[2].position = sf::Vector2f((i + 1) * tileSize.x, (j + 1) * tileSize.y);
-          quad[3].position = sf::Vector2f(i * tileSize.x, (j + 1) * tileSize.y);
+          quad[0].position = sf::Vector2f(i * t_tile_size.x, j * t_tile_size.y);
+          quad[1].position = sf::Vector2f((i + 1) * t_tile_size.x, j * t_tile_size.y);
+          quad[2].position = sf::Vector2f((i + 1) * t_tile_size.x, (j + 1) * t_tile_size.y);
+          quad[3].position = sf::Vector2f(i * t_tile_size.x, (j + 1) * t_tile_size.y);
 
 
           // define its 4 texture coordinates
-          quad[0].texCoords = sf::Vector2f(tu * tileSize.x, tv * tileSize.y);
-          quad[1].texCoords = sf::Vector2f((tu + 1) * tileSize.x, tv * tileSize.y);
-          quad[2].texCoords = sf::Vector2f((tu + 1) * tileSize.x, (tv + 1) * tileSize.y);
-          quad[3].texCoords = sf::Vector2f(tu * tileSize.x, (tv + 1) * tileSize.y);
+          quad[0].texCoords = sf::Vector2f(tu * t_tile_size.x, tv * t_tile_size.y);
+          quad[1].texCoords = sf::Vector2f((tu + 1) * t_tile_size.x, tv * t_tile_size.y);
+          quad[2].texCoords = sf::Vector2f((tu + 1) * t_tile_size.x, (tv + 1) * t_tile_size.y);
+          quad[3].texCoords = sf::Vector2f(tu * t_tile_size.x, (tv + 1) * t_tile_size.y);
         }
       }
 
@@ -538,6 +546,8 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
     std::map<int, Tile_Properties> m_map_defaults;
     std::vector<Object> m_objects;
     std::vector<std::function<void (Game &)>> m_enter_actions;
+    sf::Vector2u m_map_size;
+    sf::Vector2u m_tile_size;
 };
 
 class Game : public sf::Drawable
@@ -715,6 +725,21 @@ class Game : public sf::Drawable
       }
     }
 
+    bool has_current_map() const
+    {
+      return m_map != m_maps.end();
+    }
+
+    const Tile_Map &get_current_map() const
+    {
+      if (has_current_map())
+      {
+        return m_map->second;
+      } else {
+        throw std::runtime_error("No currently selected map");
+      }
+    }
+
     void start()
     {
       for (auto &action : m_start_actions)
@@ -755,12 +780,10 @@ Game build_game()
     0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0,
     0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0,
     0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0,
-    2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1, 2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1,
-    0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1,
   };
 
   // create the tilemap from the level definition
-  Tile_Map map(game.get_texture("tileset.png"), sf::Vector2u(32, 32), level, 32, 16, {{1, Tile_Properties(false)}});
+  Tile_Map map(game.get_texture("tileset.png"), sf::Vector2u(32, 32), level, 32, 14, {{1, Tile_Properties(false)}});
 
   Object candle(game.get_texture("candle.png"), 32, 32, 3);
   candle.setPosition(100,200);
@@ -796,7 +819,7 @@ Game build_game()
 int main()
 {
   // create the window
-  sf::RenderWindow window(sf::VideoMode(512, 256), "Tilemap");
+  sf::RenderWindow window(sf::VideoMode(512, 400), "Tilemap");
 
 
   auto game = build_game();
@@ -828,13 +851,22 @@ int main()
     sf::Event event;
     while (window.pollEvent(event))
     {
-      if(event.type == sf::Event::Closed)
+      if(event.type == sf::Event::Closed) {
         window.close();
+      }
+
+      if (event.type == sf::Event::Resized)
+      {
+        // update the view to the new size of the window
+        window.setSize(sf::Vector2u(event.size.width, event.size.height));
+        fixed = sf::View(sf::FloatRect(0,0,event.size.width, event.size.height));
+      }
     }
 
     game.update(game_time, time_elapsed);
 
-    sf::View mainView(game.get_avatar_position(), sf::Vector2f(512,256));
+    const auto window_size = window.getSize();
+    sf::View mainView(game.get_avatar_position(), sf::Vector2f(window_size));
     window.setView(mainView);
 
     window.clear();
@@ -842,11 +874,15 @@ int main()
     // main frame
     window.draw(game);
 
-    // mini view
-    sf::View miniView(sf::FloatRect(0,0,1024,512));
-    miniView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
-    window.setView(miniView);
-    window.draw(game);
+    if (game.has_current_map())
+    {
+      // mini view
+      const auto dimensions = sf::Vector2f(game.get_current_map().dimensions_in_pixels());
+      sf::View miniView(sf::FloatRect(sf::Vector2f(0,0), dimensions));
+      miniView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, (.25f * window_size.x) * (dimensions.y / dimensions.x) / window_size.y ));
+      window.setView(miniView);
+      window.draw(game);
+    }
 
     // fixed overlays
     window.setView(fixed);
