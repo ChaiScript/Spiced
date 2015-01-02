@@ -87,8 +87,8 @@ Game build_game()
   game.add_start_action(
       [](Game &t_game) {
         t_game.show_message_box("Welcome to the Game!");
-        t_game.add_queued_action([](Game &t_game) {
-          t_game.enter_map("map");
+        t_game.add_queued_action([](Game &t_t_game) {
+          t_t_game.enter_map("map");
           });
       }
     );

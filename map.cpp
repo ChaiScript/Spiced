@@ -70,14 +70,14 @@ Line_Segment::Line_Segment()
 }
 
 
-float Line_Segment::x(const float y) const
+float Line_Segment::x(const float t_y) const
 {
-  return ((y-p1.y)*(p2.x-p1.x))/(p2.y - p1.y) + p1.x;
+  return ((t_y-p1.y)*(p2.x-p1.x))/(p2.y - p1.y) + p1.x;
 }
 
-float Line_Segment::y(const float x) const
+float Line_Segment::y(const float t_x) const
 {
-  return ((p2.y-p1.y)*(x - p1.x))/(p2.x - p1.x) + p1.y;
+  return ((p2.y-p1.y)*(t_x - p1.x))/(p2.x - p1.x) + p1.y;
 }
 
 Line_Segment::operator bool() const
