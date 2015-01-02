@@ -79,12 +79,12 @@ void Game::add_queued_action(const std::function<void (Game &)> &t_action)
 
 void Game::show_message_box(const sf::String &t_msg)
 {
-  m_game_events.emplace_back(new Message_Box(t_msg, get_font("FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+  m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
 }
 
 void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj)
 {
-  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, t_game)));
+  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, t_game)));
 }
 
 bool Game::has_pending_events() const

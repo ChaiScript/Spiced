@@ -34,7 +34,7 @@ Game build_game()
   };
 
   // create the tilemap from the level definition
-  Tile_Map map(game.get_texture("tileset.png"), sf::Vector2u(32, 32), level, 32, 14, {{1, Tile_Properties(false)}});
+  Tile_Map map(game.get_texture("resources/tileset.png"), sf::Vector2u(32, 32), level, 32, 14, {{1, Tile_Properties(false)}});
 
 
   const auto candle_collision_action = [](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, sf::Sprite &/*t_collision*/)
@@ -65,11 +65,11 @@ Game build_game()
       };
   };
 
-  Object candle(game.get_texture("candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
+  Object candle(game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
   candle.setPosition(100,200);
   map.add_object(candle);
 
-  Object candle2(game.get_texture("candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
+  Object candle2(game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
   candle2.setPosition(150,200);
   map.add_object(candle2);
 
@@ -81,7 +81,7 @@ Game build_game()
     );
 
   game.add_map("map", map);
-  sf::Sprite m_avatar(game.get_texture("sprite.png"));
+  sf::Sprite m_avatar(game.get_texture("resources/sprite.png"));
   game.set_avatar(m_avatar);
 
   game.add_start_action(
