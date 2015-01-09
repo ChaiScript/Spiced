@@ -14,13 +14,13 @@
 #include <cmath>
 
 
-Queued_Action::Queued_Action(std::function<void ()> t_action)
+Queued_Action::Queued_Action(std::function<void (const float, const float, Game &)> t_action)
   : m_action(std::move(t_action))
 { }
 
-void Queued_Action::update(const float, const float, Game &)
+void Queued_Action::update(const float t_game_time, const float t_simulation_time, Game &t_game)
 {
-  m_action();
+  m_action(t_game_time, t_simulation_time, t_game);
   m_done = true;
 }
 
@@ -78,11 +78,11 @@ void Message_Box::draw(sf::RenderTarget& target, sf::RenderStates states) const
 }
 
 
-Object_Interaction_Menu::Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
+
+Selection_Menu::Selection_Menu(sf::Font t_font, int t_font_size,
     sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-    std::vector<Object_Action> t_actions)
+    std::vector<Game_Action> t_actions)
 : Game_Event(),
-  m_obj(std::ref(t_obj)),
   m_font(std::move(t_font)), m_font_color(std::move(t_font_color)), 
   m_selected_color(std::move(t_selected_font_color)),
   m_selected_cur_color(m_selected_color),
@@ -108,13 +108,13 @@ Object_Interaction_Menu::Object_Interaction_Menu(Object &t_obj, sf::Font t_font,
 
 }
 
-void Object_Interaction_Menu::update(const float t_game_time, const float t_simulation_time, Game &t_game)
+void Selection_Menu::update(const float t_game_time, const float t_simulation_time, Game &t_game)
 {
   if (m_start_time == 0) m_start_time = t_game_time;
 
   if (t_game_time - m_start_time >= .5 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
   {
-    m_actions[m_current_item].action(t_game_time, t_simulation_time, t_game, m_obj.get());
+    m_actions[m_current_item].action(t_game_time, t_simulation_time, t_game);
     m_is_done = true;
   }
 
@@ -149,12 +149,12 @@ void Object_Interaction_Menu::update(const float t_game_time, const float t_simu
   m_last_direction = direction;
 }
 
-bool Object_Interaction_Menu::is_done() const
+bool Selection_Menu::is_done() const
 {
   return m_is_done;
 }
 
-void Object_Interaction_Menu::draw(sf::RenderTarget& target, sf::RenderStates states) const
+void Selection_Menu::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
   auto size = target.getView().getSize();
   size.x -= 20;
@@ -184,5 +184,29 @@ void Object_Interaction_Menu::draw(sf::RenderTarget& target, sf::RenderStates st
   }
 
 }
+
+
+
+
+
+
+Object_Interaction_Menu::Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
+    sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
+    const std::vector<Object_Action> &t_actions)
+: Selection_Menu(std::move(t_font), t_font_size, std::move(t_font_color), std::move(t_selected_font_color), std::move(t_fill_color), std::move(t_outline_color), 
+    t_outlineThickness, 
+    [](const std::vector<Object_Action> &t_act, Object &t_o){
+      std::vector<Game_Action> res;
+      for (auto &act : t_act) {
+        auto func = act.action;
+        using namespace std::placeholders;
+        res.emplace_back(act.description, std::bind(act.action, _1, _2, _3, std::ref(t_o)));
+      }
+
+      return res;
+    }(t_actions, t_obj))
+{
+}
+
 
 

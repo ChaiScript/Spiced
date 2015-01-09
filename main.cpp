@@ -42,7 +42,24 @@ Game build_game()
     t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_game, t_obj);
   };
 
-  const auto candle_actions = [](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+  const auto conversation_tree = 
+    Conversation({
+      Question("What's Up?",
+        {Answer("Candle1", "Don't bother talking to him,\nhe cannot talk."),
+         Answer("Candle2", "I can to!")},
+        [](const float, const float, Game &, Object &) { return true; },
+        [](const float, const float, Game &t_game, Object &) { t_game.set_flag("candle2_can_talk"); }
+      ),
+      Question("Can he talk or not?",
+        {Answer( "Candle1", "No!" ),
+         Answer( "Candle2", "Yes!")},
+        [](const float, const float, Game &t_game, Object &) { return t_game.get_flag("candle2_can_talk"); },
+        std::function<bool (const float, const float, Game &, Object &)>()
+      )
+    });
+
+
+  const auto candle_actions = [conversation_tree](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
       return std::vector<Object_Action>{
         { "Look", 
           [](const float, const float, Game &t_game, Object &) 
@@ -61,15 +78,22 @@ Game build_game()
           {
             t_game.show_message_box("The candle is firmly fixed to the ground.");
           }
-        }
+        },
+        { "Talk To", 
+          [conversation_tree](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj) 
+          {
+            t_game.show_conversation(t_game_time, t_simulation_time, t_game, t_obj, conversation_tree);
+          }
+        },
+
       };
   };
 
-  Object candle(game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
+  Object candle("Candle1", game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
   candle.setPosition(100,200);
   map.add_object(candle);
 
-  Object candle2(game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
+  Object candle2("Candle2", game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
   candle2.setPosition(150,200);
   map.add_object(candle2);
 
@@ -87,7 +111,7 @@ Game build_game()
   game.add_start_action(
       [](Game &t_game) {
         t_game.show_message_box("Welcome to the Game!");
-        t_game.add_queued_action([](Game &t_t_game) {
+        t_game.add_queued_action([](const float, const float, Game &t_t_game) {
           t_t_game.enter_map("map");
           });
       }

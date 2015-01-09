@@ -8,8 +8,25 @@ class Game;
 
 class Object;
 
+struct Game_Action
+{
+  Game_Action(std::string t_description, std::function<void (const float, const float, Game &)> t_action)
+    : description(std::move(t_description)), action(std::move(t_action))
+  {
+  }
+
+  std::string description;
+  std::function<void (const float, const float, Game &)> action;
+};
+
+
 struct Object_Action
 {
+  Object_Action(std::string t_description, std::function<void (const float, const float, Game &, Object &)> t_action)
+    : description(std::move(t_description)), action(std::move(t_action))
+  {
+  }
+
   std::string description;
   std::function<void (const float, const float, Game &, Object &)> action;
 };
@@ -17,7 +34,7 @@ struct Object_Action
 class Object : public sf::Sprite
 {
   public:
-    Object(const sf::Texture &t_texture, const int width, const int height, const float fps,
+    Object(std::string t_name, const sf::Texture &t_texture, const int width, const int height, const float fps,
            std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
            std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator);
 
@@ -30,6 +47,7 @@ class Object : public sf::Sprite
     void do_collision(const float t_game_time, const float t_simulation_time, Game &t_game, sf::Sprite &t_collided_with);
 
   private:
+    std::string m_name;
     std::reference_wrapper<const sf::Texture> m_texture;
     int m_width;
     int m_height;

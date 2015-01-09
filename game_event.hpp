@@ -8,6 +8,50 @@
 class Object;
 class Game;
 class Object_Action;
+class Game_Action;
+
+struct Answer
+{
+  Answer(std::string t_speaker, std::string t_answer)
+    : speaker(std::move(t_speaker)),
+      answer(std::move(t_answer))
+  {
+  }
+
+  std::string speaker;
+  std::string answer;
+};
+
+struct Question
+{
+  Question(std::string t_question,
+           std::vector<Answer> t_answers,
+           std::function<bool (const float, const float, Game &, Object &)> t_is_available,
+           std::function<void (const float, const float, Game &, Object &)> t_action)
+    : question(std::move(t_question)),
+      answers(std::move(t_answers)),
+      is_available(std::move(t_is_available)),
+      action(std::move(t_action))
+  {
+  }
+
+  std::string question;
+  std::vector<Answer> answers;
+  std::function<bool (const float, const float, Game &, Object &)> is_available;
+  std::function<void (const float, const float, Game &, Object &)> action;
+
+};
+
+struct Conversation
+{
+  Conversation(std::vector<Question> t_questions)
+    : questions(std::move(t_questions))
+  {
+  }
+
+  std::vector<Question> questions;
+};
+
 
 class Game_Event : public sf::Drawable, public sf::Transformable
 {
@@ -23,7 +67,7 @@ class Game_Event : public sf::Drawable, public sf::Transformable
 class Queued_Action : public Game_Event
 {
   public:
-    Queued_Action(std::function<void ()> t_action);
+    Queued_Action(std::function<void (const float, const float, Game &)> t_action);
 
     virtual void update(const float, const float, Game &);
 
@@ -34,7 +78,7 @@ class Queued_Action : public Game_Event
 
   private:
     bool m_done = false;
-    std::function<void ()> m_action;
+    std::function<void (const float, const float, Game &)> m_action;
 };
 
 class Message_Box : public Game_Event
@@ -65,15 +109,14 @@ class Message_Box : public Game_Event
     bool m_is_done = false;
 };
 
-
-class Object_Interaction_Menu : public Game_Event
+class Selection_Menu : public Game_Event
 {
   public:
-    Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
+    Selection_Menu(sf::Font t_font, int t_font_size,
         sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-        std::vector<Object_Action> t_actions);
+        std::vector<Game_Action> t_actions);
 
-    virtual ~Object_Interaction_Menu() = default;
+    virtual ~Selection_Menu() = default;
 
     virtual void update(const float t_game_time, const float t_simulation_time, Game &t_game);
 
@@ -83,7 +126,6 @@ class Object_Interaction_Menu : public Game_Event
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
   private:
-    std::reference_wrapper<Object> m_obj;
     sf::Font m_font;
     sf::Color m_font_color;
     sf::Color m_selected_color;
@@ -98,7 +140,16 @@ class Object_Interaction_Menu : public Game_Event
     float m_start_time = 0;
     bool m_is_done = false;
 
-    std::vector<Object_Action> m_actions;
+    std::vector<Game_Action> m_actions;
+};
+
+
+class Object_Interaction_Menu : public Selection_Menu
+{
+  public:
+    Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
+        sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
+        const std::vector<Object_Action> &t_actions);
 };
 
 #endif

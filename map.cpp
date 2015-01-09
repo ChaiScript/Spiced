@@ -7,10 +7,10 @@
 #include <cmath>
 
 
-Object::Object(const sf::Texture &t_texture, const int width, const int height, const float fps,
+Object::Object(std::string t_name, const sf::Texture &t_texture, const int width, const int height, const float fps,
        std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
        std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
-  : m_texture(std::cref(t_texture)), m_width(width), m_height(height), m_fps(fps),
+  : m_name(std::move(t_name)), m_texture(std::cref(t_texture)), m_width(width), m_height(height), m_fps(fps),
     m_collision_action(std::move(t_collision_action)),
     m_action_generator(t_action_generator)
 {

@@ -11,6 +11,7 @@
 class Tile_Map;
 class Object;
 class Game_Event;
+class Conversation;
 
 class Game : public sf::Drawable
 {
@@ -28,11 +29,12 @@ class Game : public sf::Drawable
 
     void add_start_action(const std::function<void (Game &)> &t_action);
 
-    void add_queued_action(const std::function<void (Game &)> &t_action);
+    void add_queued_action(const std::function<void (const float t_game_time, const float t_simulation_time, Game &)> &t_action);
 
     void show_message_box(const sf::String &t_msg);
 
     void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj);
+    void show_conversation(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, const Conversation &t_conversation);
 
     bool has_pending_events() const;
 
@@ -54,6 +56,11 @@ class Game : public sf::Drawable
 
     void start();
 
+    void set_flag(const std::string &t_name);
+    void set_flag(const std::string &t_name, bool t_value);
+
+    bool get_flag(const std::string &t_name) const;
+
   private:
 
     mutable std::map<std::string, sf::Texture> m_textures;
@@ -65,6 +72,8 @@ class Game : public sf::Drawable
     sf::Sprite m_avatar;
     std::map<std::string, Tile_Map>::iterator m_map;
     std::vector<std::function<void (Game &)>> m_start_actions;
+
+    std::map<std::string, bool> m_flags;
 };
 
 

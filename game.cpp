@@ -72,14 +72,39 @@ const sf::Font &Game::get_font(const std::string &t_filename) const
   }
 }
 
-void Game::add_queued_action(const std::function<void (Game &)> &t_action)
+void Game::add_queued_action(const std::function<void (const float, const float, Game &)> &t_action)
 {
-  m_game_events.emplace_back(new Queued_Action([this, t_action](){ t_action(*this); }));
+  m_game_events.emplace_back(new Queued_Action(t_action));
 }
 
 void Game::show_message_box(const sf::String &t_msg)
 {
   m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+}
+
+void Game::show_conversation(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, const Conversation &t_conversation)
+{
+  std::vector<Object_Action> actions;
+  for (const auto &q : t_conversation.questions)
+  {
+    if (!q.is_available || q.is_available(t_game_time, t_simulation_time, t_game, t_obj))
+    {
+      actions.emplace_back(q.question, 
+          [q](const float , const float , Game &game, Object &obj)
+          {
+            for (const auto &answer : q.answers) {
+              game.show_message_box(answer.speaker + " says:\n\n" + answer.answer);
+            }
+            if (q.action) {
+              using namespace std::placeholders;
+              game.add_queued_action(std::bind(q.action, _1, _2, _3, std::ref(obj)));
+            }
+          }
+        );
+    }
+  }
+
+  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, actions));
 }
 
 void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj)
@@ -214,6 +239,27 @@ void Game::start()
   for (auto &action : m_start_actions)
   {
     action(*this);
+  }
+}
+
+void Game::set_flag(const std::string &t_name)
+{
+  set_flag(t_name, true);
+}
+
+void Game::set_flag(const std::string &t_name, bool t_value)
+{
+  m_flags[t_name] = t_value;
+}
+
+bool Game::get_flag(const std::string &t_name) const
+{
+  const auto itr = m_flags.find(t_name);
+  if (itr != m_flags.end())
+  {
+    return itr->second;
+  } else {
+    return false;
   }
 }
 
