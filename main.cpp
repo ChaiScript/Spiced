@@ -17,102 +17,188 @@ Game build_game()
   Game game;
   // define the level with an array of tile indices
   const std::vector<int> level {
-    0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0,
-    1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
-    0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0,
-    0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0,
-    0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0,
-    2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1, 2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1,
-    0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1,
-    0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0,
-    1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
-    0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0,
-    0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0,
-    0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0,
+      1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 
+      1,   1,   1,  19,  20,  21,  22,   1,  24,  25,  26,  27,  28,   1,   1,   1, 
+      1,   1,   1,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,   1,   1, 
+      1,   1,   1,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,   1,   1, 
+      1,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,   1,   1, 
+      1,  81,  82,  83,  84,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1, 
+      1,  97,  98,  99, 100,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1, 
+      1,   1, 114, 115, 116,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1, 
+      1,   1,   1, 131, 132,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1, 
+      1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1, 
   };
 
   // create the tilemap from the level definition
-  Tile_Map map(game.get_texture("resources/tileset.png"), sf::Vector2u(32, 32), level, 32, 14, {{1, Tile_Properties(false)}});
+  Tile_Map map(game.get_texture("resources/pinheads_map.png"), sf::Vector2u(32, 32), level, 16, 10, {{1, Tile_Properties(false)}});
 
 
-  const auto candle_collision_action = [](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, sf::Sprite &/*t_collision*/)
+  const auto collision_action = [](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, sf::Sprite &/*t_collision*/)
   {
-    t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_game, t_obj);
+    t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_obj);
   };
 
-  const auto conversation_tree = 
+  const auto bobby_pinhead_conversation_tree = 
     Conversation({
-      Question("What's Up?",
-        {Answer("Candle1", "Don't bother talking to him,\nhe cannot talk."),
-         Answer("Candle2", "I can to!")},
-        [](const float, const float, Game &, Object &) { return true; },
-        [](const float, const float, Game &t_game, Object &) { t_game.set_flag("candle2_can_talk"); }
+      Question("Pinhead Town?",
+        {Answer("Bobby Pinhead", "Pinhead town is where we call home. Be sure to check out the shops.")},
+        [](const float, const float, Game &t_game, Object &) { return t_game.get_flag("pinhead_town"); },
+        [](const float, const float, Game &, Object &) {  }
       ),
-      Question("Can he talk or not?",
-        {Answer( "Candle1", "No!" ),
-         Answer( "Candle2", "Yes!")},
-        [](const float, const float, Game &t_game, Object &) { return t_game.get_flag("candle2_can_talk"); },
-        std::function<bool (const float, const float, Game &, Object &)>()
+      Question("Treasure in forest?",
+        {Answer("Bobby Pinhead", "I've heard about it...\nbut I don't know anyone who has found it yet."),
+         Answer("Random Pinhead", "Bah, treasure in the forest.")},
+        [](const float, const float, Game &t_game, Object &) { return t_game.get_flag("treasure_adventure"); },
+        [](const float, const float, Game &, Object &) {  }
       )
     });
 
 
-  const auto candle_actions = [conversation_tree](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+
+  const auto random_pinhead_conversation_tree = 
+    Conversation({
+      Question("Where am I?",
+        {Answer("Random Pinhead", "You are in the Pinhead Town Center."),
+         Answer("Bobby Pinhead", "Pinhead Town is a great place, you'll like it here.\nThere is lots of adventure.")},
+        [](const float, const float, Game &, Object &) { return true; },
+        [](const float, const float, Game &t_game, Object &) { t_game.set_flag("pinhead_town"); }
+      ),
+      Question("Treasure In Forest?",
+        {Answer("Random Pinhead", "I'm skeptical about that treasure.\nSome people say they have seen it,\nbut why haven't they become rich?"),
+         Answer("Random Pinhead", "I think it's just a pipe dream of that Baker.\nHe's the one who likes to talk about it so much.")},
+        [](const float, const float, Game &t_game, Object &) { return t_game.get_flag("treasure_adventure"); },
+        [](const float, const float, Game &, Object &) {  }
+      ),
+    });
+
+
+  const auto bobby_pinhead_actions = [bobby_pinhead_conversation_tree](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
       return std::vector<Object_Action>{
         { "Look", 
           [](const float, const float, Game &t_game, Object &) 
           {
-            t_game.show_message_box("Nothing to see here");
-          }
-        },
-        { "Examine", 
-          [](const float, const float, Game &t_game, Object &) 
-          {
-            t_game.show_message_box("You really don't see anything.");
-          }
-        },
-        { "Take", 
-          [](const float, const float, Game &t_game, Object &) 
-          {
-            t_game.show_message_box("The candle is firmly fixed to the ground.");
+            t_game.show_message_box("Bobby Pinhead.\n\nA pinhead youth.");
           }
         },
         { "Talk To", 
-          [conversation_tree](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj) 
+          [bobby_pinhead_conversation_tree](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj) 
           {
-            t_game.show_conversation(t_game_time, t_simulation_time, t_game, t_obj, conversation_tree);
+            t_game.show_conversation(t_game_time, t_simulation_time, t_obj, bobby_pinhead_conversation_tree);
           }
         },
-
       };
   };
 
-  Object candle("Candle1", game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
-  candle.setPosition(100,200);
-  map.add_object(candle);
+  const auto random_pinhead_actions = [random_pinhead_conversation_tree](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+      return std::vector<Object_Action>{
+        { "Look", 
+          [](const float, const float, Game &t_game, Object &) 
+          {
+            t_game.show_message_box("A Random Pinhead.\n\nOne of the local pinheads.");
+          }
+        },
+        { "Talk To", 
+          [random_pinhead_conversation_tree](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj) 
+          {
+            t_game.show_conversation(t_game_time, t_simulation_time, t_obj, random_pinhead_conversation_tree);
+          }
+        },
+      };
+  };
 
-  Object candle2("Candle2", game.get_texture("resources/candle.png"), 32, 32, 3, candle_collision_action, candle_actions);
-  candle2.setPosition(150,200);
-  map.add_object(candle2);
+  const auto left_door_actions = [](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+      return std::vector<Object_Action>{
+        { "Look", 
+          [](const float, const float, Game &t_game, Object &) 
+          {
+            t_game.show_message_box("The Bakery");
+          }
+        },
+      };
+  };
+
+  const auto path_actions = [](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+      return std::vector<Object_Action>{
+        { "Look", 
+          [](const float, const float, Game &t_game, Object &) 
+          {
+            t_game.show_message_box("Forest Path");
+          }
+        },
+      };
+  };
+
+  const auto gate_actions = [](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+      return std::vector<Object_Action>{
+        { "Look", 
+          [](const float, const float, Game &t_game, Object &) 
+          {
+            t_game.show_message_box("Garden Gate");
+          }
+        },
+      };
+  };
+
+
+  const auto up_door_actions = [](const float /*t_game_time*/, const float /*t_simulation_time*/, Game &/*t_game*/, Object &/*t_obj*/){
+      return std::vector<Object_Action>{
+        { "Look", 
+          [](const float, const float, Game &t_game, Object &) 
+          {
+            t_game.show_message_box("The General Store");
+          }
+        },
+        { "Talk To", 
+          [](const float , const float , Game &t_game, Object &) 
+          {
+            t_game.show_message_box("You hear a voice from beyond the door:\n'Come in, we're open!'");
+          }
+        },
+      };
+  };
+
+
+  Object general_store_door("General Store Door", game.get_texture("resources/pinheads_up_door.png"), 48, 26, 0, collision_action, up_door_actions);
+  general_store_door.setPosition(299,134);
+  map.add_object(general_store_door);
+
+  Object bakery_door("Bakery Store Door", game.get_texture("resources/pinheads_left_door.png"), 22, 40, 0, collision_action, left_door_actions);
+  bakery_door.setPosition(138, 191);
+  map.add_object(bakery_door);
+
+  Object path("Forest Path", game.get_texture("resources/pinheads_path.png"), 22, 11, 0, collision_action, path_actions);
+  path.setPosition(137, 168);
+  map.add_object(path);
+
+  Object gate("Garden Gate", game.get_texture("resources/pinheads_gate.png"), 39, 12, 0, collision_action, gate_actions);
+  gate.setPosition(344, 148);
+  map.add_object(gate);
+
+  Object bobby_pinhead("Bobby Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, bobby_pinhead_actions);
+  bobby_pinhead.setPosition(270,220);
+  map.add_object(bobby_pinhead);
+
+  Object random_pinhead("Random Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, random_pinhead_actions);
+  random_pinhead.setPosition(240,250);
+  map.add_object(random_pinhead);
+
 
   map.add_enter_action(
       [](Game &t_game){
         t_game.teleport_to(200, 200);
-        t_game.show_message_box("Welcome to 'map.'");
+        t_game.show_message_box("Welcome to Pinhead Town.");
       }
     );
 
-  game.add_map("map", map);
-  sf::Sprite m_avatar(game.get_texture("resources/sprite.png"));
+  game.add_map("town", map);
+  sf::Sprite m_avatar(game.get_texture("resources/pinheads_marble.png"));
   game.set_avatar(m_avatar);
 
   game.add_start_action(
       [](Game &t_game) {
-        t_game.show_message_box("Welcome to the Game!");
+        t_game.show_message_box("Welcome to\nPinheads:\n   Everything You Need.");
         t_game.add_queued_action([](const float, const float, Game &t_t_game) {
-          t_t_game.enter_map("map");
+          t_t_game.enter_map("town");
           });
       }
     );

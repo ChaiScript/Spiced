@@ -82,34 +82,43 @@ void Game::show_message_box(const sf::String &t_msg)
   m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
 }
 
-void Game::show_conversation(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, const Conversation &t_conversation)
+void Game::show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation)
 {
   std::vector<Object_Action> actions;
   for (const auto &q : t_conversation.questions)
   {
-    if (!q.is_available || q.is_available(t_game_time, t_simulation_time, t_game, t_obj))
+    if (!q.is_available || q.is_available(t_game_time, t_simulation_time, *this, t_obj))
     {
       actions.emplace_back(q.question, 
-          [q](const float , const float , Game &game, Object &obj)
+          [q](const float , const float , Game &t_game, Object &obj)
           {
             for (const auto &answer : q.answers) {
-              game.show_message_box(answer.speaker + " says:\n\n" + answer.answer);
+              t_game.show_message_box(answer.speaker + " says:\n\n" + answer.answer);
             }
             if (q.action) {
               using namespace std::placeholders;
-              game.add_queued_action(std::bind(q.action, _1, _2, _3, std::ref(obj)));
+              t_game.add_queued_action(std::bind(q.action, _1, _2, _3, std::ref(obj)));
             }
           }
         );
     }
   }
 
+  // add a default action
+  if (actions.empty()) {
+    actions.emplace_back("...",
+       [](const float , const float , Game &, Object &)
+          { }
+        );
+  }
+
+
   m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, actions));
 }
 
-void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj)
+void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj)
 {
-  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, t_game)));
+  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
 }
 
 bool Game::has_pending_events() const
@@ -148,6 +157,7 @@ void Game::update(const float t_game_time, const float t_simulation_time)
     for (auto &collision : map.get_collisions(m_avatar, distance))
     {
       collision.get().do_collision(t_game_time, simulation_time, *this, m_avatar);
+      break; // only handle one collision
     }
 
     distance = map.adjust_move(m_avatar, distance);

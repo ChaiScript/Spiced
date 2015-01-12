@@ -33,8 +33,8 @@ class Game : public sf::Drawable
 
     void show_message_box(const sf::String &t_msg);
 
-    void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj);
-    void show_conversation(const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, const Conversation &t_conversation);
+    void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj);
+    void show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation);
 
     bool has_pending_events() const;
 
