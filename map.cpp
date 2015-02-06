@@ -87,14 +87,14 @@ Line_Segment::operator bool() const
 
 float Line_Segment::distance_to_p1(const sf::Vector2f &t_point) const
 {
-  return sqrtf( (t_point.x - p1.x) * (t_point.x - p1.x) + (t_point.y - p1.y) * (t_point.y - p1.y) );
+  return std::hypot(t_point.x - p1.x, t_point.y - p1.y);
 }
 
 float Line_Segment::length() const 
 {
   if (p1 == p2) return 0;
 
-  return sqrtf( (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y) );
+  return std::hypot(p2.x - p1.x, p2.y - p1.y);
 }
 
 sf::FloatRect Line_Segment::boundingRect() const
