@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cmath>
 
+#include <iostream>
 
 Object::Object(std::string t_name, const sf::Texture &t_texture, const int width, const int height, const float fps,
        std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
@@ -206,11 +207,11 @@ Tile_Data::Tile_Data(int t_x, int t_y, Tile_Properties t_props, sf::FloatRect t_
 }
 
 
-Tile_Map::Tile_Map(const sf::Texture &t_tileset,
-        const sf::Vector2u &t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
-  : m_tileset(std::cref(t_tileset)), m_map_defaults(std::move(t_map_defaults))
+Tile_Map::Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
+        const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
+  : m_tilesets(t_tilesets), m_map_defaults(std::move(t_map_defaults))
 {
-  load(t_tile_size, tiles, width, height);
+  load(t_tile_size, layers, width, height);
 }
 
 
@@ -233,55 +234,67 @@ sf::Vector2u Tile_Map::dimensions_in_pixels() const
 }
 
 
-bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height)
+bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height)
 {
-  // resize the vertex array to fit the level size
-  m_vertices.setPrimitiveType(sf::Quads);
-  m_vertices.resize(width * height * 4);
-  m_tile_data.reserve(width * height);
   m_map_size = sf::Vector2u(width, height);
   m_tile_size = t_tile_size;
 
-  // populate the vertex array, with one quad per tile
-  for (unsigned int i = 0; i < width; ++i)
+  for (const auto &layer : layers) 
   {
-    for (unsigned int j = 0; j < height; ++j)
+    int min_tile = 1;
+    for (const auto &tileset : m_tilesets)
     {
-      // get the current tile number
-      auto tileNumber = tiles[i + j * width];
+      const auto max_tile = min_tile + (tileset.get().getSize().x / t_tile_size.x) * (tileset.get().getSize().y / t_tile_size.y) - 1;
+
+      sf::VertexArray vertices(sf::Quads);
+
+      // populate the vertex array, with one quad per tile
+      for (unsigned int i = 0; i < width; ++i)
+      {
+        for (unsigned int j = 0; j < height; ++j)
+        {
+          // get the current tile number
+          const auto tileNumber = layer[i + j * width];
+
+          if (tileNumber >= min_tile && tileNumber <= max_tile)
+          {
+            auto tilePropsFunc = [tileNumber, this](){
+              auto defaults_itr = m_map_defaults.find(tileNumber);
+              if (defaults_itr != m_map_defaults.end()) {
+                return defaults_itr->second;
+              } else {
+                return Tile_Properties();
+              }
+            };
+
+            m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * t_tile_size.x, j * t_tile_size.y, t_tile_size.x, t_tile_size.y));
+
+            // find its position in the tileset texture
+            const auto tu = (tileNumber - min_tile) % (tileset.get().getSize().x / t_tile_size.x);
+            const auto tv = (tileNumber - min_tile) / (tileset.get().getSize().x / t_tile_size.x);
 
 
-      auto tilePropsFunc = [tileNumber, this](){
-        auto defaults_itr = m_map_defaults.find(tileNumber);
-        if (defaults_itr != m_map_defaults.end()) {
-          return defaults_itr->second;
-        } else {
-          return Tile_Properties();
+            vertices.append(sf::Vertex(
+                  sf::Vector2f(i * t_tile_size.x, j * t_tile_size.y),
+                  sf::Vector2f(tu * t_tile_size.x, tv * t_tile_size.y)));
+
+            vertices.append(sf::Vertex(
+                  sf::Vector2f((i + 1) * t_tile_size.x, j * t_tile_size.y),
+                  sf::Vector2f((tu + 1) * t_tile_size.x, tv * t_tile_size.y)));
+
+            vertices.append(sf::Vertex(
+                  sf::Vector2f((i + 1) * t_tile_size.x, (j + 1) * t_tile_size.y),
+                  sf::Vector2f((tu + 1) * t_tile_size.x, (tv + 1) * t_tile_size.y)));
+
+            vertices.append(sf::Vertex(
+                  sf::Vector2f(i * t_tile_size.x, (j + 1) * t_tile_size.y),
+                  sf::Vector2f(tu * t_tile_size.x, (tv + 1) * t_tile_size.y)));
+
+          }
         }
-      };
+      }
 
-      m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * t_tile_size.x, j * t_tile_size.y, t_tile_size.x, t_tile_size.y));
-
-      // find its position in the tileset texture
-      const auto tu = tileNumber % (m_tileset.get().getSize().x / t_tile_size.x);
-      const auto tv = tileNumber / (m_tileset.get().getSize().x / t_tile_size.x);
-
-      // get a pointer to the current tile's quad
-      auto quad = &m_vertices[(i + j * width) * 4];
-
-
-      // define its 4 corners
-      quad[0].position = sf::Vector2f(i * t_tile_size.x, j * t_tile_size.y);
-      quad[1].position = sf::Vector2f((i + 1) * t_tile_size.x, j * t_tile_size.y);
-      quad[2].position = sf::Vector2f((i + 1) * t_tile_size.x, (j + 1) * t_tile_size.y);
-      quad[3].position = sf::Vector2f(i * t_tile_size.x, (j + 1) * t_tile_size.y);
-
-
-      // define its 4 texture coordinates
-      quad[0].texCoords = sf::Vector2f(tu * t_tile_size.x, tv * t_tile_size.y);
-      quad[1].texCoords = sf::Vector2f((tu + 1) * t_tile_size.x, tv * t_tile_size.y);
-      quad[2].texCoords = sf::Vector2f((tu + 1) * t_tile_size.x, (tv + 1) * t_tile_size.y);
-      quad[3].texCoords = sf::Vector2f(tu * t_tile_size.x, (tv + 1) * t_tile_size.y);
+      m_layers.push_back(vertices);
     }
   }
 
@@ -423,11 +436,15 @@ void Tile_Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
   // apply the transform
   states.transform *= getTransform();
 
-  // apply the tileset texture
-  states.texture = &m_tileset.get();
+  for (const auto &layer : m_layers) {
+    for (const auto &tileset : m_tilesets) {
+      // apply the tileset texture
+      states.texture = &tileset.get();
 
-  // draw the vertex array
-  target.draw(m_vertices, states);
+      // draw the vertex array
+      target.draw(layer, states);
+    }
+  }
 
   for (auto &obj : m_objects)
   {

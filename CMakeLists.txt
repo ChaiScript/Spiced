@@ -92,7 +92,7 @@ set(CPACK_RPM_PACKAGE_GROUP "Gaming")
 
 set(CHAI_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
 
-configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/Doxyfile)
+#configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/Doxyfile)
 
 include(CTest)
 include(CPack)

@@ -114,8 +114,8 @@ struct Tile_Data
 class Tile_Map : public sf::Drawable, public sf::Transformable
 {
   public:
-    Tile_Map(const sf::Texture &t_tileset,
-            const sf::Vector2u &t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults);
+    Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
+            const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults);
 
     virtual ~Tile_Map() = default;
 
@@ -125,7 +125,7 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 
     sf::Vector2u dimensions_in_pixels() const;
 
-    bool load(sf::Vector2u t_tile_size, const std::vector<int> &tiles, const unsigned int width, const unsigned int height);
+    bool load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height);
 
     void add_object(const Object &t_o);
 
@@ -145,8 +145,9 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
-    sf::VertexArray m_vertices;
-    std::reference_wrapper<const sf::Texture> m_tileset;
+
+    std::vector<sf::VertexArray> m_layers;
+    std::vector<std::reference_wrapper<const sf::Texture>> m_tilesets;
     std::vector<Tile_Data> m_tile_data;
     std::map<int, Tile_Properties> m_map_defaults;
     std::vector<Object> m_objects;
