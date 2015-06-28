@@ -1,0 +1,3 @@
+[submodule "SimpleJSON"]
+	path = SimpleJSON
+	url = git@github.com:lefticus/SimpleJSON.git
