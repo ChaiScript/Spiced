@@ -117,6 +117,8 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
     Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
             const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults);
 
+    Tile_Map(Game &t_game, const std::string &t_file_path, std::map<int, Tile_Properties> t_map_defaults);
+
     virtual ~Tile_Map() = default;
 
     void add_enter_action(const std::function<void (Game &)> t_action);

@@ -1,10 +1,13 @@
 #include "map.hpp"
 #include "game.hpp"
+#include "SimpleJSON/json.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <functional>
 #include <cassert>
 #include <cmath>
+#include <fstream>
+#include <sstream>
 
 #include <iostream>
 
@@ -214,6 +217,36 @@ Tile_Map::Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> 
   load(t_tile_size, layers, width, height);
 }
 
+Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::map<int, Tile_Properties> t_map_defaults)
+  : m_map_defaults(std::move(t_map_defaults))
+{
+  std::ifstream ifs(t_file_path);
+  std::stringstream buff;
+  buff << ifs.rdbuf();
+  auto json = json::JSON::Load(buff.str());
+
+  const auto tile_size = sf::Vector2u(json.at("tilewidth").ToInt(), json.at("tileheight").ToInt());
+  const auto map_width = json.at("width").ToInt();
+  const auto map_height = json.at("height").ToInt();
+
+  const auto parent_path = t_file_path.substr(0, t_file_path.rfind('/'));
+
+  for (const auto &tileset : json.at("tilesets").ArrayRange())
+  {
+    m_tilesets.emplace_back(t_game.get_texture(parent_path + '/' + tileset.at("image").ToString()));
+  }
+
+  std::vector<std::vector<int>> layers;
+  for (const auto &layer : json.at("layers").ArrayRange()) {
+    std::vector<int> data;
+    for (const auto &val : layer.at("data").ArrayRange()) {
+      data.push_back(val.ToInt());
+    }
+    layers.push_back(data);
+  }
+
+  load(tile_size, layers, map_width, map_height);
+}
 
 void Tile_Map::add_enter_action(const std::function<void (Game &)> t_action)
 {
@@ -295,6 +328,7 @@ bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>
       }
 
       m_layers.push_back(vertices);
+      min_tile = max_tile + 1;
     }
   }
 
@@ -418,8 +452,8 @@ void Tile_Map::do_move(const float t_time, sf::Sprite &t_s, const sf::Vector2f &
     std::get<0>(cur_segment).get().properties.do_movement_action(t_time * percent, length);
   }
 
-  assert(total >= 0.999);
-  assert(total <= 1.001);
+  //assert(total >= 0.999);
+  //assert(total <= 1.001);
 }
 
 void Tile_Map::update(const float t_game_time, const float t_simulation_time, Game &t_game)
@@ -436,14 +470,11 @@ void Tile_Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
   // apply the transform
   states.transform *= getTransform();
 
-  for (const auto &layer : m_layers) {
-    for (const auto &tileset : m_tilesets) {
-      // apply the tileset texture
-      states.texture = &tileset.get();
-
-      // draw the vertex array
-      target.draw(layer, states);
-    }
+  for (size_t i = 0; i < m_layers.size(); ++i)
+  {
+    auto state = states;
+    state.texture = &m_tilesets[i % m_tilesets.size()].get();
+    target.draw(m_layers[i], state);
   }
 
   for (auto &obj : m_objects)

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="16" tileheight="16" nextobjectid="1">
+ <tileset firstgid="1" source="../TileSets/tileset_1.tsx"/>
+ <tileset firstgid="337" name="mountains_0" tilewidth="16" tileheight="16">
+  <image source="../TileSets/mountains_0.png" width="192" height="160"/>
+ </tileset>
+ <layer name="Background" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJwTYmBgEBrFA4L3Usmce0C8HorPDzK3jZozuMwBAEwpGdQ=
+  </data>
+ </layer>
+ <layer name="Mountains" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJy1kssOgkAMReET/Drcg+jO8bETHztB3Qnq53oWNDbNRCdNbHISmqE3d+a2zLOsghnUMAdPLZkLsII1bGDi0Nox08AeDnAcPVmPuq8i52dooYMLXJW38ONb3+EOPQzwgGdEN9a35g6xsrr96LtTvf3HU958S/O2Nt/FF62Cs2n+2Yug5m2+2wRPsheNmdc6pwQd2QtBctP53RLfSHZDZ6Szejnz+me9AaCqQB8=
+  </data>
+ </layer>
+ <layer name="Roads" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAtUGJExWaM1DFXZZib4wykTaGYVADSqwrELkBsTIJ+Z7S4gukl1W/KONQPhDnOWMJgMhn+wuUWYs2BxaUjUryiY1c0Pi0AACLiCNc=
+  </data>
+ </layer>
+ <layer name="Cities" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJxjYMAEH4H4ExZxUgEjIwMDEyOEHcBIBQOHEFAH+lcDiDUp9Lc5UL8FEFuSYQ5ymLsD2R5A7DnC4oFc8BmIvwDxVwr1MQPDmwWIWYnIB8hy6PqEgbQIEIuSGH/o+gAlmwuC
+  </data>
+ </layer>
+</map>

@@ -15,22 +15,10 @@
 Game build_game()
 {
   Game game;
-  // define the level with an array of tile indices
-  const std::vector<int> level {
-      2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2, 
-      2,   2,   2,  20,  21,  22,  23,   2,  25,  26,  27,  28,  29,   2,   2,   2, 
-      2,   2,   2,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,   2,   2, 
-      2,   2,   2,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,   2,   2, 
-      2,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,   2,   2, 
-      2,  82,  83,  84,  85,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2, 
-      2,  98,  99, 100, 101,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2, 
-      2,   2, 115, 116, 117,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2, 
-      2,   2,   2, 132, 133,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2, 
-      2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2, 
-  };
 
   // create the tilemap from the level definition
-  Tile_Map map({std::cref(game.get_texture("resources/pinheads_map.png"))}, sf::Vector2u(32, 32), {level}, 16, 10, {{2, Tile_Properties(false)}});
+  Tile_Map map(game, "resources/Maps/worldmap.json", {{2, Tile_Properties(false)}});
+//  Tile_Map map(game, "resources/Maps/test.json", {{2, Tile_Properties(false)}});
 
 
   const auto collision_action = [](const float t_game_time, const float t_simulation_time, Game &t_game, Object &t_obj, sf::Sprite &/*t_collision*/)
