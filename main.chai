@@ -1,0 +1,179 @@
+var game_creator = fun(game) {
+  // create the tilemap from the level definition
+  var map = Tile_Map(game, "resources/Maps/worldmap.json", [Tile_Defaults(2, Tile_Properties(false))]);
+//  Tile_Map map(game, "resources/Maps/test.json", {{2, Tile_Properties(false)}});
+
+
+  var collision_action = fun(t_game_time, t_simulation_time, t_game, t_obj, t_collision)
+  {
+    t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_obj);
+  };
+
+  var bobby_pinhead_conversation_tree =
+    Conversation([
+      Question("Pinhead Town?",
+        [Answer("Bobby Pinhead", "Pinhead town is where we call home. Be sure to check out the shops.")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ return t_game.get_flag("pinhead_town"); },
+        fun(t_game_time, t_simulation_time, t_game, t_obj){  }
+      ),
+      Question("Treasure in forest?",
+        [Answer("Bobby Pinhead", "I've heard about it...\nbut I don't know anyone who has found it yet."),
+         Answer("Random Pinhead", "Bah, treasure in the forest.")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { return t_game.get_flag("treasure_adventure"); },
+        fun(t_game_time, t_simulation_time, t_game, t_obj) {  }
+      )
+    ]);
+
+
+  var random_pinhead_conversation_tree = 
+    Conversation([
+      Question("Where am I?",
+        [Answer("Random Pinhead", "You are in the Pinhead Town Center."),
+         Answer("Bobby Pinhead", "Pinhead Town is a great place, you'll like it here.\nThere is lots of adventure.")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { return true; },
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { t_game.set_flag("pinhead_town", true); }
+      ),
+      Question("Treasure In Forest?",
+        [Answer("Random Pinhead", "I'm skeptical about that treasure.\nSome people say they have seen it,\nbut why haven't they become rich?"),
+         Answer("Random Pinhead", "I think it's just a pipe dream of that Baker.\nHe's the one who likes to talk about it so much.")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { return t_game.get_flag("treasure_adventure"); },
+        fun(t_game_time, t_simulation_time, t_game, t_obj) {  }
+      )
+    ]);
+
+
+  var bobby_pinhead_actions = fun[bobby_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+    var look = Object_Action("Look",
+      fun(t_game_time, t_simulation_time, t_game, t_obj)
+      {
+        t_game.show_message_box("Bobby Pinhead.\n\nA pinhead youth.");
+      }
+    )
+    var talk_to = Object_Action("Talk To",
+      fun[bobby_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+      {
+        t_game.show_conversation(t_game_time, t_simulation_time, t_obj, bobby_pinhead_conversation_tree);
+      }
+    )
+    return [look, talk_to]
+  };
+
+  var random_pinhead_actions = fun[random_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+      return [
+        Object_Action("Look",
+          fun(t_game_time, t_simulation_time, t_game, t_obj) 
+          {
+            t_game.show_message_box("A Random Pinhead.\n\nOne of the local pinheads.");
+          }
+        ),
+        Object_Action("Talk To",
+          fun[random_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj) 
+          {
+            t_game.show_conversation(t_game_time, t_simulation_time, t_obj, random_pinhead_conversation_tree);
+          }
+        )
+      ];
+  };
+
+  var left_door_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
+      return [
+        Object_Action("Look", 
+          fun(t_game_time, t_simulation_time, t_game, t_obj) 
+          {
+            t_game.show_message_box("The Bakery");
+          }
+        )
+      ];
+  };
+
+  var path_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
+      return [
+        Object_Action("Look",
+          fun(t_game_time, t_simulation_time, t_game, t_obj) 
+          {
+            t_game.show_message_box("Forest Path");
+          }
+        )
+      ];
+  };
+
+  var gate_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
+      return [
+        Object_Action("Look",
+          fun(t_game_time, t_simulation_time, t_game, t_obj)
+          {
+            t_game.show_message_box("Garden Gate");
+          }
+        )
+      ];
+  };
+
+
+  var up_door_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
+      return [
+        Object_Action("Look",
+          fun(t_game_time, t_simulation_time, t_game, t_obj)
+          {
+            t_game.show_message_box("The General Store");
+          }
+        ),
+        Object_Action("Talk To",
+          fun(t_game_time, t_simulation_time, t_game, t_obj)
+          {
+            t_game.show_message_box("You hear a voice from beyond the door:\n'Come in, we're open!'");
+          }
+        )
+      ];
+  };
+
+
+  var general_store_door = Object("General Store Door", game.get_texture("resources/pinheads_up_door.png"), 48, 26, 0, collision_action, up_door_actions);
+  general_store_door.setPosition(299,134);
+  map.add_object(general_store_door);
+
+  var bakery_door = Object("Bakery Store Door", game.get_texture("resources/pinheads_left_door.png"), 22, 40, 0, collision_action, left_door_actions);
+  bakery_door.setPosition(138, 191);
+  map.add_object(bakery_door);
+
+  var path = Object("Forest Path", game.get_texture("resources/pinheads_path.png"), 22, 11, 0, collision_action, path_actions);
+  path.setPosition(137, 168);
+  map.add_object(path);
+
+  var gate = Object("Garden Gate", game.get_texture("resources/pinheads_gate.png"), 39, 12, 0, collision_action, gate_actions);
+  gate.setPosition(344, 148);
+  map.add_object(gate);
+
+  var bobby_pinhead = Object("Bobby Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, bobby_pinhead_actions);
+  bobby_pinhead.setPosition(270,220);
+  map.add_object(bobby_pinhead);
+
+  var random_pinhead = Object("Random Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, random_pinhead_actions);
+  random_pinhead.setPosition(240,250);
+  map.add_object(random_pinhead);
+
+
+  map.add_enter_action(
+      fun(t_game) {
+        t_game.teleport_to(200, 200);
+        t_game.show_message_box("Welcome to Pinhead Town.");
+      }
+    );
+
+  game.add_map("town", map);
+  var avatar = Sprite(game.get_texture("resources/pinheads_marble.png"));
+  game.set_avatar(avatar);
+
+
+  game.add_start_action(
+      fun(t_game) {
+        t_game.show_message_box("Welcome to\nPinheads:\n   Everything You Need.");
+        t_game.add_queued_action(
+          fun(t_game_time, t_simulation_time, t_t_game) {
+            t_t_game.enter_map("town");
+          }
+        );
+      }
+    );
+
+
+}

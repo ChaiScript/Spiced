@@ -12,7 +12,9 @@
 
 
 Game::Game()
-  : m_map(m_maps.end())
+  : m_map(m_maps.end()),
+    m_rotate(0),
+    m_zoom(1)
 {
 }
 
@@ -252,10 +254,7 @@ void Game::start()
   }
 }
 
-void Game::set_flag(const std::string &t_name)
-{
-  set_flag(t_name, true);
-}
+
 
 void Game::set_flag(const std::string &t_name, bool t_value)
 {
@@ -272,5 +271,26 @@ bool Game::get_flag(const std::string &t_name) const
     return false;
   }
 }
+
+void Game::set_rotate(const float t_r)
+{
+  m_rotate = t_r;
+}
+
+void Game::set_zoom(const float t_z)
+{
+  m_zoom = t_z;
+}
+
+float Game::rotate()
+{
+  return m_rotate;
+}
+
+float Game::zoom()
+{
+  return m_zoom;
+}
+
 
 

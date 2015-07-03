@@ -11,6 +11,17 @@
 #include "game.hpp"
 #include "game_event.hpp"
 #include "map.hpp"
+#include "chaiscript_creator.hpp"
+#include "ChaiScript/include/chaiscript/chaiscript.hpp"
+
+Game build_chai_game(chaiscript::ChaiScript &chai)
+{
+  Game game;
+
+  chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("main.chai"))(game);
+
+  return game;
+}
 
 Game build_game()
 {
@@ -49,7 +60,7 @@ Game build_game()
         {Answer("Random Pinhead", "You are in the Pinhead Town Center."),
          Answer("Bobby Pinhead", "Pinhead Town is a great place, you'll like it here.\nThere is lots of adventure.")},
         [](const float, const float, Game &, Object &) { return true; },
-        [](const float, const float, Game &t_game, Object &) { t_game.set_flag("pinhead_town"); }
+        [](const float, const float, Game &t_game, Object &) { t_game.set_flag("pinhead_town", true); }
       ),
       Question("Treasure In Forest?",
         {Answer("Random Pinhead", "I'm skeptical about that treasure.\nSome people say they have seen it,\nbut why haven't they become rich?"),
@@ -182,6 +193,7 @@ Game build_game()
   sf::Sprite m_avatar(game.get_texture("resources/pinheads_marble.png"));
   game.set_avatar(m_avatar);
 
+
   game.add_start_action(
       [](Game &t_game) {
         t_game.show_message_box("Welcome to\nPinheads:\n   Everything You Need.");
@@ -199,8 +211,9 @@ int main()
   // create the window
   sf::RenderWindow window(sf::VideoMode(512, 400), "Tilemap");
 
+  auto chaiscript = create_chaiscript();
 
-  auto game = build_game();
+  auto game = build_chai_game(*chaiscript);
 
   auto start_time = std::chrono::steady_clock::now();
 
@@ -245,6 +258,8 @@ int main()
 
     const auto window_size = window.getSize();
     sf::View mainView(game.get_avatar_position(), sf::Vector2f(window_size));
+    mainView.zoom(game.zoom());
+    mainView.rotate(game.rotate());
     window.setView(mainView);
 
     window.clear();

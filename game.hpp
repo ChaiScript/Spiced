@@ -17,6 +17,9 @@ class Game : public sf::Drawable
 {
   public:
     Game();
+    Game(const Game &) = delete;
+    Game(Game &&) = default;
+
 
     const sf::Texture &get_texture(const std::string &t_filename) const;
     const sf::Font &get_font(const std::string &t_filename) const;
@@ -56,10 +59,15 @@ class Game : public sf::Drawable
 
     void start();
 
-    void set_flag(const std::string &t_name);
     void set_flag(const std::string &t_name, bool t_value);
 
     bool get_flag(const std::string &t_name) const;
+
+    void set_rotate(const float);
+    void set_zoom(const float);
+
+    float rotate();
+    float zoom();
 
   private:
 
@@ -74,6 +82,9 @@ class Game : public sf::Drawable
     std::vector<std::function<void (Game &)>> m_start_actions;
 
     std::map<std::string, bool> m_flags;
+
+    float m_rotate;
+    float m_zoom;
 };
 
 

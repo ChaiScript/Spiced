@@ -69,6 +69,18 @@ struct Tile_Properties
   std::function<void (float, float)> movement_action;
 };
 
+struct Tile_Defaults
+{
+  Tile_Defaults(const int t_tile_id, Tile_Properties t_props)
+    : tile_id(t_tile_id), props(std::move(t_props))
+  {
+  }
+
+  int tile_id;
+  Tile_Properties props;
+};
+
+
 struct Line_Segment
 {
   Line_Segment(sf::Vector2f t_p1, sf::Vector2f t_p2);
@@ -115,9 +127,10 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 {
   public:
     Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
-            const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults);
+            const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, 
+            const unsigned int width, const unsigned int height, std::vector<Tile_Defaults> t_map_defaults);
 
-    Tile_Map(Game &t_game, const std::string &t_file_path, std::map<int, Tile_Properties> t_map_defaults);
+    Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults);
 
     virtual ~Tile_Map() = default;
 
@@ -147,6 +160,7 @@ class Tile_Map : public sf::Drawable, public sf::Transformable
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
+    static std::map<int, Tile_Properties> to_map(std::vector<Tile_Defaults> &&t_vec);
 
     std::vector<sf::VertexArray> m_layers;
     std::vector<std::reference_wrapper<const sf::Texture>> m_tilesets;

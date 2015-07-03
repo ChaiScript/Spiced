@@ -1,3 +1,6 @@
 [submodule "SimpleJSON"]
 	path = SimpleJSON
 	url = git@github.com:lefticus/SimpleJSON.git
+[submodule "ChaiScript"]
+	path = ChaiScript
+	url = git@github.com:ChaiScript/ChaiScript

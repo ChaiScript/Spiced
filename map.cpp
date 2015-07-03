@@ -11,6 +11,7 @@
 
 #include <iostream>
 
+
 Object::Object(std::string t_name, const sf::Texture &t_texture, const int width, const int height, const float fps,
        std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
        std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
@@ -209,16 +210,27 @@ Tile_Data::Tile_Data(int t_x, int t_y, Tile_Properties t_props, sf::FloatRect t_
 {
 }
 
+std::map<int, Tile_Properties> Tile_Map::to_map(std::vector<Tile_Defaults> &&t_vec)
+{
+  std::map<int, Tile_Properties> retmap;
+  for (auto &d : t_vec)
+  {
+    retmap.emplace(std::move(d.tile_id), std::move(d.props));
+  }
+  return retmap;
+}
 
 Tile_Map::Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
-        const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, std::map<int, Tile_Properties> t_map_defaults)
-  : m_tilesets(t_tilesets), m_map_defaults(std::move(t_map_defaults))
+        const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, 
+        std::vector<Tile_Defaults> t_map_defaults)
+  : m_tilesets(t_tilesets), 
+    m_map_defaults(to_map(std::move(t_map_defaults)))
 {
   load(t_tile_size, layers, width, height);
 }
 
-Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::map<int, Tile_Properties> t_map_defaults)
-  : m_map_defaults(std::move(t_map_defaults))
+Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults)
+  : m_map_defaults(to_map(std::move(t_map_defaults)))
 {
   std::ifstream ifs(t_file_path);
   std::stringstream buff;
