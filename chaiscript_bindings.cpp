@@ -1,15 +1,22 @@
-#include "ChaiScript/include/chaiscript/chaiscript.hpp"
-
 #include "game.hpp"
 #include "map.hpp"
 #include "game_event.hpp"
 
-#define ADD_FUN(Class, Name) module->add(chaiscript::fun(&Class::Name), "Name")
+#include "ChaiScript/include/chaiscript/chaiscript.hpp"
+
+
+#define ADD_FUN(Class, Name) module->add(chaiscript::fun(&Class::Name), #Name )
 
 std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
 {
   auto module = std::shared_ptr<chaiscript::Module>(new chaiscript::Module());
+  module->add(chaiscript::vector_conversion<std::vector<Tile_Defaults>>());
+  module->add(chaiscript::vector_conversion<std::vector<Answer>>());
+  module->add(chaiscript::vector_conversion<std::vector<Question>>());
+  module->add(chaiscript::vector_conversion<std::vector<Object_Action>>());
 
+
+  module->add(chaiscript::user_type<Game>(), "Game");
   ADD_FUN(Game, get_texture);
   ADD_FUN(Game, get_font);
   ADD_FUN(Game, teleport_to);
@@ -38,31 +45,38 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
 
   module->add(chaiscript::fun(&Game::get_input_direction_vector), "get_input_direction_vector");
 
+  module->add(chaiscript::user_type<Answer>(), "Answer");
   module->add(chaiscript::constructor<Answer (std::string, std::string)>(), "Answer");
 
+  module->add(chaiscript::user_type<Question>(), "Question");
   module->add(chaiscript::constructor<
       Question (std::string, std::vector<Answer>, 
                 std::function<bool (const float, const float, Game &, Object &)>,
                 std::function<void (const float, const float, Game &, Object &)>)>(), "Question");
 
+  module->add(chaiscript::user_type<Conversation>(), "Conversation");
   module->add(chaiscript::constructor<Conversation(std::vector<Question>)>(), "Conversation");
 
+  module->add(chaiscript::user_type<Game_Action>(), "Game_Action");
   module->add(chaiscript::constructor<Game_Action(std::string, std::function<void (const float, const float, Game &)>)>(), "Game_Action");
   ADD_FUN(Game_Action, description);
   ADD_FUN(Game_Action, action);
 
+  module->add(chaiscript::user_type<Object_Action>(), "Object_Action");
   module->add(chaiscript::constructor<Object_Action(std::string, std::function<void (const float, const float, Game &, Object &)>)>(), "Object_Action");
   ADD_FUN(Object_Action, description);
   ADD_FUN(Object_Action, action);
 
 
+  module->add(chaiscript::user_type<Object>(), "Game_Object");
   module->add(chaiscript::constructor<Object(std::string, const sf::Texture &, const int, const int, const float, 
            std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> ,
-           std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> )>(), "Object");
+           std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> )>(), "Game_Object");
 
   ADD_FUN(Object, update);
   ADD_FUN(Object, get_actions);
   ADD_FUN(Object, do_collision);
+  ADD_FUN(Object, set_position);
 
   module->add(chaiscript::constructor<Tile_Properties(bool)>(), "Tile_Properties");
   module->add(chaiscript::constructor<Tile_Properties(bool, std::function<void (float, float)>)>(), "Tile_Properties");
@@ -85,6 +99,7 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Tile_Map, do_move);
   ADD_FUN(Tile_Map, update);
 
+  module->add(chaiscript::type_conversion<std::string, sf::String>());
 
   return module;
 }

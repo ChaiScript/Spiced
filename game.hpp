@@ -26,7 +26,7 @@ class Game : public sf::Drawable
 
     void teleport_to(const float x, const float y);
 
-    void set_avatar(const sf::Sprite &t_avatar);
+    void set_avatar(const sf::Texture &t_avatar);
 
     void add_map(const std::string &t_name, const Tile_Map &t_map);
 

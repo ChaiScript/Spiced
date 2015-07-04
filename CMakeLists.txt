@@ -184,6 +184,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 add_executable(game_engine main.cpp game.cpp game_event.cpp map.cpp chaiscript_stdlib.cpp chaiscript_bindings.cpp chaiscript_creator.cpp)
 target_link_libraries(game_engine ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} dl)
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY main.chai DESTINATION ${CMAKE_BINARY_DIR})
 
 install(TARGETS game_engine RUNTIME DESTINATION bin)
 

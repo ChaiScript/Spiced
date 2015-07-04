@@ -42,6 +42,8 @@ class Object : public sf::Sprite
 
     void update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game);
 
+    void set_position(const float x, const float y);
+
     std::vector<Object_Action> get_actions(const float t_game_time, const float t_simulation_time, Game &t_game);
 
     void do_collision(const float t_game_time, const float t_simulation_time, Game &t_game, sf::Sprite &t_collided_with);

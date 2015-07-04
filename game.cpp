@@ -41,9 +41,9 @@ void Game::teleport_to(const float x, const float y)
   m_avatar.setPosition(x, y);
 }
 
-void Game::set_avatar(const sf::Sprite &t_avatar)
+void Game::set_avatar(const sf::Texture &t_avatar)
 {
-  m_avatar = t_avatar;
+  m_avatar = sf::Sprite(t_avatar);
 }
 
 void Game::add_map(const std::string &t_name, const Tile_Map &t_map)

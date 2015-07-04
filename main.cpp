@@ -18,7 +18,18 @@ Game build_chai_game(chaiscript::ChaiScript &chai)
 {
   Game game;
 
-  chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("main.chai"))(game);
+  try {
+    chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("main.chai"))(game);
+  }
+  catch (const chaiscript::exception::eval_error &ee) {
+    std::cout << ee.pretty_print();
+    std::cout << '\n';
+    throw;
+  }
+  catch (std::exception &e) {
+    std::cout << e.what() << '\n';
+    throw;
+  }
 
   return game;
 }
@@ -190,8 +201,7 @@ Game build_game()
     );
 
   game.add_map("town", map);
-  sf::Sprite m_avatar(game.get_texture("resources/pinheads_marble.png"));
-  game.set_avatar(m_avatar);
+  game.set_avatar(game.get_texture("resources/pinheads_marble.png"));
 
 
   game.add_start_action(
@@ -208,84 +218,96 @@ Game build_game()
 
 int main()
 {
-  // create the window
-  sf::RenderWindow window(sf::VideoMode(512, 400), "Tilemap");
+  try {
 
-  auto chaiscript = create_chaiscript();
+    // create the window
+    sf::RenderWindow window(sf::VideoMode(512, 400), "Tilemap");
 
-  auto game = build_chai_game(*chaiscript);
+    auto chaiscript = create_chaiscript();
 
-  auto start_time = std::chrono::steady_clock::now();
+    auto game = build_chai_game(*chaiscript);
 
-  auto last_frame = std::chrono::steady_clock::now();
-  uint64_t frame_count = 0;
+    auto start_time = std::chrono::steady_clock::now();
 
-  sf::View fixed = window.getView();
+    auto last_frame = std::chrono::steady_clock::now();
+    uint64_t frame_count = 0;
 
-  game.start();
+    sf::View fixed = window.getView();
 
-  // run the main loop
-  while (window.isOpen())
-  {
-    ++frame_count;
-    auto cur_frame = std::chrono::steady_clock::now();
-    auto time_elapsed = std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - last_frame).count();
-    auto game_time =  std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - start_time).count();
+    game.start();
 
-    if (frame_count % 100 == 0)
+    // run the main loop
+    while (window.isOpen())
     {
-      std::cout << 1/time_elapsed << "fps avg fps: " << frame_count / game_time << '\n';
-    }
+      ++frame_count;
+      auto cur_frame = std::chrono::steady_clock::now();
+      auto time_elapsed = std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - last_frame).count();
+      auto game_time =  std::chrono::duration_cast<std::chrono::duration<float>>(cur_frame - start_time).count();
 
-    last_frame = cur_frame;
-    // handle events
-    sf::Event event;
-    while (window.pollEvent(event))
-    {
-      if(event.type == sf::Event::Closed) {
-        window.close();
-      }
-
-      if (event.type == sf::Event::Resized)
+      if (frame_count % 100 == 0)
       {
-        // update the view to the new size of the window
-        window.setSize(sf::Vector2u(event.size.width, event.size.height));
-        fixed = sf::View(sf::FloatRect(0,0,event.size.width, event.size.height));
+        std::cout << 1/time_elapsed << "fps avg fps: " << frame_count / game_time << '\n';
       }
-    }
 
-    game.update(game_time, time_elapsed);
+      last_frame = cur_frame;
+      // handle events
+      sf::Event event;
+      while (window.pollEvent(event))
+      {
+        if(event.type == sf::Event::Closed) {
+          window.close();
+        }
 
-    const auto window_size = window.getSize();
-    sf::View mainView(game.get_avatar_position(), sf::Vector2f(window_size));
-    mainView.zoom(game.zoom());
-    mainView.rotate(game.rotate());
-    window.setView(mainView);
+        if (event.type == sf::Event::Resized)
+        {
+          // update the view to the new size of the window
+          window.setSize(sf::Vector2u(event.size.width, event.size.height));
+          fixed = sf::View(sf::FloatRect(0,0,event.size.width, event.size.height));
+        }
+      }
 
-    window.clear();
+      game.update(game_time, time_elapsed);
 
-    // main frame
-    window.draw(game);
+      const auto window_size = window.getSize();
+      sf::View mainView(game.get_avatar_position(), sf::Vector2f(window_size));
+      mainView.zoom(game.zoom());
+      mainView.rotate(game.rotate());
+      window.setView(mainView);
 
-    if (game.has_current_map())
-    {
-      // mini view
-      const auto dimensions = sf::Vector2f(game.get_current_map().dimensions_in_pixels());
-      sf::View miniView(sf::FloatRect(sf::Vector2f(0,0), dimensions));
-      miniView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, (.25f * window_size.x) * (dimensions.y / dimensions.x) / window_size.y ));
-      window.setView(miniView);
+      window.clear();
+
+      // main frame
       window.draw(game);
+
+      if (game.has_current_map())
+      {
+        // mini view
+        const auto dimensions = sf::Vector2f(game.get_current_map().dimensions_in_pixels());
+        sf::View miniView(sf::FloatRect(sf::Vector2f(0,0), dimensions));
+        miniView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, (.25f * window_size.x) * (dimensions.y / dimensions.x) / window_size.y ));
+        window.setView(miniView);
+        window.draw(game);
+      }
+
+      // fixed overlays
+      window.setView(fixed);
+
+      if (game.has_pending_events())
+      {
+        window.draw(game.get_current_event());
+      }
+
+      window.display();
     }
-
-    // fixed overlays
-    window.setView(fixed);
-
-    if (game.has_pending_events())
-    {
-      window.draw(game.get_current_event());
-    }
-
-    window.display();
+  }
+  catch (const chaiscript::exception::eval_error &ee) {
+    std::cout << ee.pretty_print();
+    std::cout << '\n';
+    throw;
+  }
+  catch (std::exception &e) {
+    std::cout << e.what() << '\n';
+    throw;
   }
 }
 

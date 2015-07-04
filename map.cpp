@@ -48,6 +48,11 @@ void Object::do_collision(const float t_game_time, const float t_simulation_time
   }
 }
 
+void Object::set_position(const float x, const float y)
+{
+  setPosition(x,y);
+}
+
 
 Tile_Properties::Tile_Properties(bool t_passable,
     std::function<void (float, float)> t_movement_action)
