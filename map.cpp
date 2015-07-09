@@ -12,33 +12,51 @@
 #include <iostream>
 
 
-Object::Object(std::string t_name, const sf::Texture &t_texture, const int width, const int height, const float fps,
-       std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
-       std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
-  : m_name(std::move(t_name)), m_texture(std::cref(t_texture)), m_width(width), m_height(height), m_fps(fps),
+Object::Object(std::string t_name, Tileset t_tileset,
+               const int t_tile_id,
+               const bool t_visible,
+               std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
+               std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
+  : m_name(std::move(t_name)),
+    m_tileset(std::move(t_tileset)),
+    m_tile_id(t_tile_id),
+    m_visible(t_visible),
     m_collision_action(std::move(t_collision_action)),
-    m_action_generator(t_action_generator)
+    m_action_generator(std::move(t_action_generator))
 {
-  setTexture(m_texture);
-  setTextureRect(sf::IntRect(0,0,width,height));
-  m_num_frames = m_texture.get().getSize().x / width;
+  setTexture(m_tileset.texture.get());
+  setTextureRect(m_tileset.get_rect(m_tile_id, 0));
 }
 
-void Object::update(const float t_game_time, const float /*t_simulation_time*/, Game &/*t_game*/)
+
+void Object::update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game)
 {
-  auto i = 0.0f;
-  const auto remainder = std::modf(t_game_time, &i);
-  const auto seconds_per_frame = 1/m_fps;
-  const auto cur_step = int(remainder / seconds_per_frame);
-  const auto cur_frame = cur_step % m_num_frames;
-  assert(cur_frame >= 0 && cur_frame < m_num_frames);
-  setTextureRect(sf::IntRect(m_width * cur_frame, 0, m_width, m_height));
+  setTextureRect(m_tileset.get_rect(m_tile_id, t_game_time));
+
+  if (!m_visible) {
+    if (t_game.show_invisible()) {
+      setColor(sf::Color(255,255,255,128));
+    } else {
+      setColor(sf::Color(255,255,255,0));
+    }
+  }
 }
 
 std::vector<Object_Action> Object::get_actions(const float t_game_time, const float t_simulation_time, Game &t_game)
 {
   return m_action_generator(t_game_time, t_simulation_time, t_game, *this);
 }
+
+void Object::set_collision_action(std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action)
+{
+  m_collision_action = std::move(t_collision_action);
+}
+
+void Object::set_action_generator(std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
+{
+  m_action_generator = std::move(t_action_generator);
+}
+
 
 void Object::do_collision(const float t_game_time, const float t_simulation_time, Game &t_game, sf::Sprite &t_collided_with)
 {
@@ -53,6 +71,10 @@ void Object::set_position(const float x, const float y)
   setPosition(x,y);
 }
 
+std::string Object::name() const
+{
+  return m_name;
+}
 
 Tile_Properties::Tile_Properties(bool t_passable,
     std::function<void (float, float)> t_movement_action)
@@ -130,9 +152,9 @@ Line_Segment Line_Segment::clipTo(const sf::FloatRect &t_rect) const
 
   const auto bounds = boundingRect();
 
-  auto validate = [&t_rect, &bounds](const float x, const float y) {
-    return    t_rect.left <= x && t_rect.top <= y && (t_rect.left + t_rect.width) >= x && (t_rect.top + t_rect.height) >= y
-           && bounds.left <= x && bounds.top <= y && (bounds.left + bounds.width) >= x && (bounds.top + bounds.height) >= y;
+  auto validate = [&t_rect, &bounds](const float t_x, const float t_y) {
+    return    t_rect.left <= t_x && t_rect.top <= t_y && (t_rect.left + t_rect.width) >= t_x && (t_rect.top + t_rect.height) >= t_y
+           && bounds.left <= t_x && bounds.top <= t_y && (bounds.left + bounds.width) >= t_x && (bounds.top + bounds.height) >= t_y;
   };
 
   auto edge_x = [&t_rect](const sf::Vector2f &t_p1, const sf::Vector2f &t_p2)
@@ -225,14 +247,6 @@ std::map<int, Tile_Properties> Tile_Map::to_map(std::vector<Tile_Defaults> &&t_v
   return retmap;
 }
 
-Tile_Map::Tile_Map(const std::vector<std::reference_wrapper<const sf::Texture>> &t_tilesets,
-        const sf::Vector2u &t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height, 
-        std::vector<Tile_Defaults> t_map_defaults)
-  : m_tilesets(t_tilesets), 
-    m_map_defaults(to_map(std::move(t_map_defaults)))
-{
-  load(t_tile_size, layers, width, height);
-}
 
 Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults)
   : m_map_defaults(to_map(std::move(t_map_defaults)))
@@ -248,18 +262,126 @@ Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Til
 
   const auto parent_path = t_file_path.substr(0, t_file_path.rfind('/'));
 
+  std::map<int, std::map<std::string, std::string>> tile_properties;
+
   for (const auto &tileset : json.at("tilesets").ArrayRange())
   {
-    m_tilesets.emplace_back(t_game.get_texture(parent_path + '/' + tileset.at("image").ToString()));
+    const auto first_gid = tileset.at("firstgid").ToInt();
+
+
+    if (tileset.hasKey("tileproperties")) {
+      for (const auto &tile : tileset.at("tileproperties").ObjectRange()) {
+        auto id = std::stoi(tile.first) + first_gid;
+
+        //std::map<std::string, std::string> props;
+        for (const auto &property : tile.second.ObjectRange()) {
+          const std::string &prop_name = property.first;
+          const std::string value = property.second.ToString();
+          if (prop_name == "passable" && value == "false") {
+            m_map_defaults[id].passable = false;
+          } else {
+            std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+          }
+          //props.emplace(property.first, property.second.ToString());
+        }
+        //tile_properties.emplace(id, std::move(props));
+      }
+    }
+
+    std::map<int, Animation> animations;
+    if (tileset.hasKey("tiles")) {
+      for (const auto &tile : tileset.at("tiles").ObjectRange()) {
+        auto id = std::stoi(tile.first) + first_gid;
+
+        if (tile.second.hasKey("animation")) {
+          Animation anim;
+          for (const auto &frame : tile.second.at("animation").ArrayRange()) {
+            const auto duration = frame.at("duration").ToInt();
+            const auto tileid = frame.at("tileid").ToInt() + first_gid;
+            anim.emplace_back(tileid, duration);
+          }
+
+          animations.emplace(std::make_pair(id, anim));
+        }
+      }
+    }
+
+    m_tilesets.emplace_back(t_game.get_texture(parent_path + '/' + tileset.at("image").ToString()),
+        first_gid,
+        tileset.at("tilewidth").ToInt(), tileset.at("tileheight").ToInt(),
+        std::move(animations));
+
   }
 
-  std::vector<std::vector<int>> layers;
+  std::vector<Layer> layers;
+
   for (const auto &layer : json.at("layers").ArrayRange()) {
-    std::vector<int> data;
-    for (const auto &val : layer.at("data").ArrayRange()) {
-      data.push_back(val.ToInt());
+
+
+    if (layer.at("type").ToString() == "tilelayer") {
+      bool visible = layer.at("visible").ToBool();
+
+      if (layer.hasKey("properties")) {
+        for (const auto &property : layer.at("properties").ObjectRange()) {
+          const std::string &prop_name = property.first;
+          const std::string value = property.second.ToString();
+          if (prop_name == "visible" && value == "false") {
+            visible = false;
+          } else {
+            std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+          }
+          //props.emplace(property.first, property.second.ToString());
+        }
+      }
+
+      std::vector<int> data;
+      for (const auto &val : layer.at("data").ArrayRange()) {
+        data.push_back(val.ToInt());
+      }
+      layers.emplace_back(std::move(data), visible);
+    } else if (layer.at("type").ToString() == "objectgroup") {
+      for (const auto &obj : layer.at("objects").ArrayRange()) {
+        const auto gid = obj.at("gid").ToInt();
+        const auto name = obj.at("name").ToString();
+
+        const auto tileset = std::find_if(m_tilesets.begin(), m_tilesets.end(), 
+            [gid](const Tileset &t_tileset) {
+              return gid >= t_tileset.min_gid() && gid <= t_tileset.max_gid();
+            });
+        assert(tileset != m_tilesets.end());
+
+        bool visible = obj.at("visible").ToBool();
+
+        for (const auto &property : obj.at("properties").ObjectRange()) {
+          const std::string &prop_name = property.first;
+          const std::string value = property.second.ToString();
+          if (prop_name == "visible" && value == "false") {
+            visible = false;
+          } else {
+            std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+          }
+          //props.emplace(property.first, property.second.ToString());
+        }
+
+        const auto get_float = [&](const std::string &t_name){
+          auto v = obj.at(t_name);
+          if (v.JSONType() == json::JSON::Class::Floating) {
+            return v.ToFloat();
+          } else {
+            return double(v.ToInt());
+          }
+        };
+
+        const auto x = get_float("x");
+        const auto y = get_float("y") - tileset->tile_height;
+
+        std::cout << "Placing object: " << name << "(" << x << ", " << y << ")\n";
+
+        Object gameobj(name, *tileset, gid, visible, {}, {});
+        gameobj.set_position(x, y);
+        add_object(gameobj);
+      }
     }
-    layers.push_back(data);
   }
 
   load(tile_size, layers, map_width, map_height);
@@ -284,17 +406,17 @@ sf::Vector2u Tile_Map::dimensions_in_pixels() const
 }
 
 
-bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>> &layers, const unsigned int width, const unsigned int height)
+void Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<Layer> &layers, const unsigned int width, const unsigned int height)
 {
   m_map_size = sf::Vector2u(width, height);
   m_tile_size = t_tile_size;
 
   for (const auto &layer : layers) 
   {
-    int min_tile = 1;
     for (const auto &tileset : m_tilesets)
     {
-      const auto max_tile = min_tile + (tileset.get().getSize().x / t_tile_size.x) * (tileset.get().getSize().y / t_tile_size.y) - 1;
+      const auto min_tile = tileset.min_gid();
+      const auto max_tile = tileset.max_gid();
 
       sf::VertexArray vertices(sf::Quads);
 
@@ -304,7 +426,7 @@ bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>
         for (unsigned int j = 0; j < height; ++j)
         {
           // get the current tile number
-          const auto tileNumber = layer[i + j * width];
+          const auto tileNumber = layer.data[i + j * width];
 
           if (tileNumber >= min_tile && tileNumber <= max_tile)
           {
@@ -318,38 +440,22 @@ bool Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<std::vector<int>
             };
 
             m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * t_tile_size.x, j * t_tile_size.y, t_tile_size.x, t_tile_size.y));
-
-            // find its position in the tileset texture
-            const auto tu = (tileNumber - min_tile) % (tileset.get().getSize().x / t_tile_size.x);
-            const auto tv = (tileNumber - min_tile) / (tileset.get().getSize().x / t_tile_size.x);
-
-
-            vertices.append(sf::Vertex(
-                  sf::Vector2f(i * t_tile_size.x, j * t_tile_size.y),
-                  sf::Vector2f(tu * t_tile_size.x, tv * t_tile_size.y)));
-
-            vertices.append(sf::Vertex(
-                  sf::Vector2f((i + 1) * t_tile_size.x, j * t_tile_size.y),
-                  sf::Vector2f((tu + 1) * t_tile_size.x, tv * t_tile_size.y)));
-
-            vertices.append(sf::Vertex(
-                  sf::Vector2f((i + 1) * t_tile_size.x, (j + 1) * t_tile_size.y),
-                  sf::Vector2f((tu + 1) * t_tile_size.x, (tv + 1) * t_tile_size.y)));
-
-            vertices.append(sf::Vertex(
-                  sf::Vector2f(i * t_tile_size.x, (j + 1) * t_tile_size.y),
-                  sf::Vector2f(tu * t_tile_size.x, (tv + 1) * t_tile_size.y)));
+            const auto tilesetvertices = tileset.vertices(tileNumber, i, j);
+            for (size_t index = 0; index < tilesetvertices.getVertexCount(); ++index) 
+            {
+              vertices.append(tilesetvertices[index]);
+              if (!layer.visible) {
+                vertices[vertices.getVertexCount() - 1].color = sf::Color(255,255,255,0);
+              }
+            }
 
           }
         }
       }
 
       m_layers.push_back(vertices);
-      min_tile = max_tile + 1;
     }
   }
-
-  return true;
 }
 
 void Tile_Map::add_object(const Object &t_o)
@@ -385,6 +491,23 @@ bool Tile_Map::test_move(const sf::Sprite &t_s, const sf::Vector2f &distance) co
   }
 
   return true;
+}
+
+void Tile_Map::set_collision_action(const std::string &t_obj_name,
+    std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action)
+{
+
+  const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
+  if (obj == m_objects.end()) throw std::logic_error("Attempt to set collision action on non-existent object: " + t_obj_name);
+  obj->set_collision_action(t_collision_action);
+}
+
+void Tile_Map::set_action_generator(const std::string &t_obj_name,
+    std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> t_action_generator)
+{
+  const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
+  if (obj == m_objects.end()) throw std::logic_error("Attempt to set collision action on non-existent object: " + t_obj_name);
+  obj->set_action_generator(t_action_generator);
 }
 
 std::vector<std::reference_wrapper<Object>> Tile_Map::get_collisions(const sf::Sprite &t_s, const sf::Vector2f &t_distance) 
@@ -490,7 +613,7 @@ void Tile_Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
   for (size_t i = 0; i < m_layers.size(); ++i)
   {
     auto state = states;
-    state.texture = &m_tilesets[i % m_tilesets.size()].get();
+    state.texture = &m_tilesets[i % m_tilesets.size()].texture.get();
     target.draw(m_layers[i], state);
   }
 
@@ -498,6 +621,12 @@ void Tile_Map::draw(sf::RenderTarget& target, sf::RenderStates states) const
   {
     target.draw(obj, states);
   }
+}
+
+
+sf::Vector2u Tile_Map::tile_size() const
+{
+  return m_tile_size;
 }
 
 

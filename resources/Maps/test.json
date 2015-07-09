@@ -1,0 +1,56 @@
+{ "height":4,
+ "layers":[
+        {
+         "data":[18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18],
+         "height":4,
+         "name":"Background",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":4,
+         "x":0,
+         "y":0
+        }
+      ],
+ "orientation":"orthogonal",
+ "properties":
+    {
+
+    },
+ "renderorder":"right-down",
+ "tileheight":16,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "image":"..\/TileSets\/tileset_1.png",
+         "imageheight":336,
+         "imagewidth":256,
+         "margin":0,
+         "name":"tileset_1",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":16,
+         "tilewidth":16
+        }, 
+        {
+         "firstgid":337,
+         "image":"..\/TileSets\/mountains_0.png",
+         "imageheight":160,
+         "imagewidth":192,
+         "margin":0,
+         "name":"mountains_0",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":16,
+         "tilewidth":16
+        }],
+ "tilewidth":16,
+ "version":1,
+ "width":4
+}

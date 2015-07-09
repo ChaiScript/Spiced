@@ -1,7 +1,49 @@
+class Travel_To {
+  def Travel_To(string t_name, int t_cost, int t_x, int t_y) {
+    this.name = t_name;
+    this.cost = t_cost;
+    this.x = t_x;
+    this.y = t_y;
+  }
+
+  var name;
+  var cost;
+  var x;
+  var y;
+}
+
+def make_signpost_actions(Vector t_locations) {
+  var actions = [];
+
+  for(var i = 0; i < t_locations.size(); ++i) {
+    var x = t_locations[i].x;
+    var y = t_locations[i].y;
+    var cost = t_locations[i].cost;
+
+    actions.push_back_ref(
+      Object_Action("Travel to ${t_locations[i].name} (costs: ${t_locations[i].cost})",
+        fun[x,y,cost](t_game_time, t_simulation_time, t_game, t_obj)
+        {
+          t_game.teleport_to_tile(x,y);
+        }
+      )
+    );
+  }
+  actions.push_back_ref(Object_Action("Done", fun(t_game_time, t_simulation_time, t_game, t_obj){}));
+
+  return fun[actions](t_game_time, t_simulation_time, t_game, t_obj)
+            {
+              return actions;
+            }
+}
+
+
 var game_creator = fun(game) {
 
   // create the tilemap from the level definition
   var map = Tile_Map(game, "resources/Maps/worldmap.json", [Tile_Defaults(2, Tile_Properties(false))]);
+
+
 
 
   var collision_action = fun(t_game_time, t_simulation_time, t_game, t_obj, t_collision)
@@ -10,167 +52,162 @@ var game_creator = fun(game) {
     t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_obj);
   };
 
-  var bobby_pinhead_conversation_tree =
+  // Glenn Haven
+  map.set_collision_action("glennhaven_signpost", collision_action);
+  map.set_action_generator("glennhaven_signpost", make_signpost_actions(
+      [Travel_To("Fairview", 5, 12, 12),
+       Travel_To("Mineralville", 10, 12, 6)]));
+
+  map.set_collision_action("glennhaven",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("glennhaven");
+    }
+  );
+
+  var glennhaven = Tile_Map(game, "resources/Maps/glennhaven.json", []);
+  glennhaven.add_enter_action(
+      fun(t_game) {
+        t_game.teleport_to_tile(9, 4);
+      }
+    );
+
+  glennhaven.set_collision_action("ExitSquare",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("world");
+      t_game.teleport_to_tile(2,12);
+    }
+  );
+
+
+  var YoungEntrepeneur_conversation_tree =
     Conversation([
-      Question("Pinhead Town?",
-        [Answer("Bobby Pinhead", "Pinhead town is where we call home. Be sure to check out the shops.")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ return t_game.get_flag("pinhead_town"); },
+      Question("Hello",
+        [Answer("YoungEntrepeneur", "Hi! Welcome to Glenn Haven.\nI've just opened up shop here.\nI think you'll like our prices on bread!")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
-      ),
-      Question("Treasure in forest?",
-        [Answer("Bobby Pinhead", "I've heard about it...\nbut I don't know anyone who has found it yet."),
-         Answer("Random Pinhead", "Bah, treasure in the forest.")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { return t_game.get_flag("treasure_adventure"); },
-        fun(t_game_time, t_simulation_time, t_game, t_obj) {  }
       )
     ]);
 
 
-  var random_pinhead_conversation_tree = 
-    Conversation([
-      Question("Where am I?",
-        [Answer("Random Pinhead", "You are in the Pinhead Town Center."),
-         Answer("Bobby Pinhead", "Pinhead Town is a great place, you'll like it here.\nThere is lots of adventure.")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { return true; },
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { t_game.set_flag("pinhead_town", true); }
-      ),
-      Question("Treasure In Forest?",
-        [Answer("Random Pinhead", "I'm skeptical about that treasure.\nSome people say they have seen it,\nbut why haven't they become rich?"),
-         Answer("Random Pinhead", "I think it's just a pipe dream of that Baker.\nHe's the one who likes to talk about it so much.")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { return t_game.get_flag("treasure_adventure"); },
-        fun(t_game_time, t_simulation_time, t_game, t_obj) {  }
-      )
-    ]);
 
-
-  var bobby_pinhead_actions = fun[bobby_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var YoungEntrepeneur_actions = fun[YoungEntrepeneur_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_message_box("Bobby Pinhead.\n\nA pinhead youth.");
+          t_game.show_message_box("The proprietor of this trading post");
         }
       ),
       Object_Action("Talk To",
-        fun[bobby_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[YoungEntrepeneur_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, bobby_pinhead_conversation_tree);
+          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, YoungEntrepeneur_conversation_tree);
         }
       )
     ];
   };
 
-  var random_pinhead_actions = fun[random_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
-      return [
-        Object_Action("Look",
-          fun(t_game_time, t_simulation_time, t_game, t_obj) 
-          {
-            t_game.show_message_box("A Random Pinhead.\n\nOne of the local pinheads.");
-          }
-        ),
-        Object_Action("Talk To",
-          fun[random_pinhead_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj) 
-          {
-            t_game.show_conversation(t_game_time, t_simulation_time, t_obj, random_pinhead_conversation_tree);
-          }
-        )
-      ];
-  };
+  glennhaven.set_collision_action("YoungEntrepeneur", collision_action);
+  glennhaven.set_action_generator("YoungEntrepeneur", YoungEntrepeneur_actions);
 
-  var left_door_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
-      return [
-        Object_Action("Look", 
-          fun(t_game_time, t_simulation_time, t_game, t_obj) 
-          {
-            t_game.show_message_box("The Bakery");
-          }
-        )
-      ];
-  };
-
-  var path_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
-      return [
-        Object_Action("Look",
-          fun(t_game_time, t_simulation_time, t_game, t_obj) 
-          {
-            t_game.show_message_box("Forest Path");
-          }
-        )
-      ];
-  };
-
-  var gate_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
-      return [
-        Object_Action("Look",
-          fun(t_game_time, t_simulation_time, t_game, t_obj)
-          {
-            t_game.show_message_box("Garden Gate");
-          }
-        )
-      ];
-  };
+  game.add_map("glennhaven", glennhaven);
 
 
-  var up_door_actions = fun(t_game_time, t_simulation_time, t_game, t_obj){
-      return [
-        Object_Action("Look",
-          fun(t_game_time, t_simulation_time, t_game, t_obj)
-          {
-            t_game.show_message_box("The General Store");
-          }
-        ),
-        Object_Action("Talk To",
-          fun(t_game_time, t_simulation_time, t_game, t_obj)
-          {
-            t_game.show_message_box("You hear a voice from beyond the door:\n'Come in, we're open!'");
-          }
-        )
-      ];
-  };
+  // Fairview
+  map.set_collision_action("fairview_signpost", collision_action);
+  map.set_action_generator("fairview_signpost", make_signpost_actions(
+      [Travel_To("Glenn Haven", 5, 3, 12),
+       Travel_To("Mineralville", 8, 12, 6)]));
 
+  map.set_collision_action("fairview",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("fairview");
+    }
+  );
 
-  var general_store_door = Game_Object("General Store Door", game.get_texture("resources/pinheads_up_door.png"), 48, 26, 0, collision_action, up_door_actions);
-  general_store_door.set_position(299,134);
-  map.add_object(general_store_door);
-
-  var bakery_door = Game_Object("Bakery Store Door", game.get_texture("resources/pinheads_left_door.png"), 22, 40, 0, collision_action, left_door_actions);
-  bakery_door.set_position(138, 191);
-  map.add_object(bakery_door);
-
-  var path = Game_Object("Forest Path", game.get_texture("resources/pinheads_path.png"), 22, 11, 0, collision_action, path_actions);
-  path.set_position(137, 168);
-  map.add_object(path);
-
-  var gate = Game_Object("Garden Gate", game.get_texture("resources/pinheads_gate.png"), 39, 12, 0, collision_action, gate_actions);
-  gate.set_position(344, 148);
-  map.add_object(gate);
-
-  var bobby_pinhead = Game_Object("Bobby Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, bobby_pinhead_actions);
-  bobby_pinhead.set_position(270,220);
-  map.add_object(bobby_pinhead);
-
-  var random_pinhead = Game_Object("Random Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, random_pinhead_actions);
-  random_pinhead.set_position(240,250);
-  map.add_object(random_pinhead);
-
-
-  map.add_enter_action(
+  var fairview = Tile_Map(game, "resources/Maps/fairview.json", []);
+  fairview.add_enter_action(
       fun(t_game) {
-        t_game.teleport_to(200, 200);
-        t_game.show_message_box("Welcome to Pinhead Town.");
+        t_game.teleport_to_tile(9, 4);
       }
     );
 
-  game.add_map("town", map);
+  fairview.set_collision_action("ExitSquare",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("world");
+      t_game.teleport_to_tile(13,12);
+    }
+  );
+
+  game.add_map("fairview", fairview);
+
+  // Mineralville
+  map.set_collision_action("mineralville_signpost", collision_action);
+  map.set_action_generator("mineralville_signpost", make_signpost_actions(
+      [Travel_To("Glenn Haven", 10, 3, 12),
+       Travel_To("Fairview", 8, 12, 12),
+       Travel_To("Camp", 15, 8, 1)]));
+
+  map.set_collision_action("mineralville",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("mineralville");
+    }
+  );
+
+  var mineralville = Tile_Map(game, "resources/Maps/mineralville.json", []);
+  mineralville.add_enter_action(
+      fun(t_game) {
+        t_game.teleport_to_tile(9, 4);
+      }
+    );
+  mineralville.set_collision_action("ExitSquare",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("world");
+      t_game.teleport_to_tile(14,5);
+    }
+  );
+
+  game.add_map("mineralville", mineralville);
+
+  // Camp
+  map.set_collision_action("camp_signpost", collision_action);
+  map.set_action_generator("camp_signpost", make_signpost_actions(
+      [Travel_To("Mineralville", 15, 12, 6)]));
+
+  map.set_collision_action("camp",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("camp");
+    }
+  );
+
+  var camp = Tile_Map(game, "resources/Maps/camp.json", []);
+  camp.add_enter_action(
+      fun(t_game) {
+        t_game.teleport_to_tile(9, 4);
+      }
+    );
+  camp.set_collision_action("ExitSquare",
+    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
+      t_game.enter_map("world");
+      t_game.teleport_to_tile(7,1);
+    }
+  );
+
+  game.add_map("camp", camp);
+
+  game.add_map("world", map);
   game.set_avatar(game.get_texture("resources/pinheads_marble.png"));
 
+
+
+  game.set_zoom(.5);
 
   game.add_start_action(
       fun(t_game) {
         t_game.show_message_box("Welcome to\nPinheads:\n   Everything You Need.");
         t_game.add_queued_action(
-          fun(t_game_time, t_simulation_time, t_t_game) {
-            t_t_game.enter_map("town");
+          fun(t_game_time, t_simulation_time, t_game) {
+            t_game.enter_map("glennhaven");
           }
         );
       }

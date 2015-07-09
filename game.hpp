@@ -25,6 +25,7 @@ class Game : public sf::Drawable
     const sf::Font &get_font(const std::string &t_filename) const;
 
     void teleport_to(const float x, const float y);
+    void teleport_to_tile(const int x, const int y);
 
     void set_avatar(const sf::Texture &t_avatar);
 
@@ -68,6 +69,9 @@ class Game : public sf::Drawable
 
     float rotate();
     float zoom();
+
+    bool show_mini_map() const;
+    bool show_invisible() const;
 
   private:
 

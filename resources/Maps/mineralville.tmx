@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="tilesetformattedupdate1" tilewidth="16" tileheight="16">
+  <image source="../TileSets/tilesetformattedupdate1.png" width="112" height="192"/>
+ </tileset>
+ <tileset firstgid="85" name="info_tiles" tilewidth="16" tileheight="16">
+  <image source="../TileSets/info_tiles.png" width="64" height="64"/>
+  <tile id="0">
+   <properties>
+    <property name="passable" value="false"/>
+   </properties>
+  </tile>
+ </tileset>
+ <layer name="Tile Layer 2" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgYwE4kppW9LEDMCsRsaGxa28sNxDxAzIvGprW9AxXOI8XeUTAKRsEoGAWjABkAACV3Abc=
+  </data>
+ </layer>
+ <layer name="Tile Layer 1" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJyTZWBgkCOA5RmoD1SIUKM2ai9d7KUFGMz+pYW92kCsQwDr0sDeUTAKRsEoGAWDEwAAfxcEew==
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYGBgsARiPSDWx0LbMtAOOACxKRCbYaFdaGSnMhC745H3ppG9IOAHxP5AHADEgWjsIBrZqUwjcwcrGGn+HQWjYBSMglEwOAEAtHsGzg==
+  </data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object name="ExitSquare" gid="7" x="160" y="80"/>
+ </objectgroup>
+ <layer name="Data Tiles" width="30" height="20" opacity="0.5">
+  <properties>
+   <property name="visible" value="false"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJwLZWBgCCUCUxsQMne42jsQ4TwQgBh7B8q/wyl+R8EoGAWjYBQMTgAAdA0OSA==
+  </data>
+ </layer>
+</map>

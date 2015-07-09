@@ -167,7 +167,7 @@ Game build_game()
       };
   };
 
-
+/*
   Object general_store_door("General Store Door", game.get_texture("resources/pinheads_up_door.png"), 48, 26, 0, collision_action, up_door_actions);
   general_store_door.setPosition(299,134);
   map.add_object(general_store_door);
@@ -191,7 +191,7 @@ Game build_game()
   Object random_pinhead("Random Pinhead", game.get_texture("resources/pinheads_pinhead.png"), 26, 26, 0, collision_action, random_pinhead_actions);
   random_pinhead.setPosition(240,250);
   map.add_object(random_pinhead);
-
+*/
 
   map.add_enter_action(
       [](Game &t_game){
@@ -221,7 +221,7 @@ int main()
   try {
 
     // create the window
-    sf::RenderWindow window(sf::VideoMode(512, 400), "Tilemap");
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Tilemap");
 
     auto chaiscript = create_chaiscript();
 
@@ -279,7 +279,8 @@ int main()
       // main frame
       window.draw(game);
 
-      if (game.has_current_map())
+
+      if (game.show_mini_map() && game.has_current_map())
       {
         // mini view
         const auto dimensions = sf::Vector2f(game.get_current_map().dimensions_in_pixels());
@@ -288,6 +289,7 @@ int main()
         window.setView(miniView);
         window.draw(game);
       }
+
 
       // fixed overlays
       window.setView(fixed);
@@ -303,10 +305,6 @@ int main()
   catch (const chaiscript::exception::eval_error &ee) {
     std::cout << ee.pretty_print();
     std::cout << '\n';
-    throw;
-  }
-  catch (std::exception &e) {
-    std::cout << e.what() << '\n';
     throw;
   }
 }

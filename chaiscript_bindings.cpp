@@ -20,6 +20,7 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Game, get_texture);
   ADD_FUN(Game, get_font);
   ADD_FUN(Game, teleport_to);
+  ADD_FUN(Game, teleport_to_tile);
   ADD_FUN(Game, set_avatar);
   ADD_FUN(Game, add_map);
   ADD_FUN(Game, add_start_action);
@@ -69,7 +70,7 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
 
 
   module->add(chaiscript::user_type<Object>(), "Game_Object");
-  module->add(chaiscript::constructor<Object(std::string, const sf::Texture &, const int, const int, const float, 
+  module->add(chaiscript::constructor<Object(std::string, Tileset, const int, const bool,
            std::function<void (const float, const float, Game &, Object &, sf::Sprite &)> ,
            std::function<std::vector<Object_Action> (const float, const float, Game &, Object &)> )>(), "Game_Object");
 
@@ -98,6 +99,8 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Tile_Map, adjust_move);
   ADD_FUN(Tile_Map, do_move);
   ADD_FUN(Tile_Map, update);
+  ADD_FUN(Tile_Map, set_collision_action);
+  ADD_FUN(Tile_Map, set_action_generator);
 
   module->add(chaiscript::type_conversion<std::string, sf::String>());
 
