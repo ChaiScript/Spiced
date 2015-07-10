@@ -50,7 +50,7 @@
  </layer>
  <objectgroup name="Object Layer 1">
   <object name="ExitSquare" gid="7" x="160" y="80"/>
-  <object name="Candle" gid="85" x="135.333" y="108.667"/>
+  <object name="Candle" gid="85" x="119" y="54"/>
   <object name="YoungEntrepeneur" gid="117" x="21" y="79"/>
  </objectgroup>
  <layer name="DataTiles" width="30" height="20" opacity="0.6">

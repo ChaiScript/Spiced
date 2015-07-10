@@ -11,6 +11,7 @@
 class Tile_Map;
 class Object;
 class Game_Event;
+class Game_Action;
 class Conversation;
 
 class Game : public sf::Drawable
@@ -37,6 +38,7 @@ class Game : public sf::Drawable
 
     void show_message_box(const sf::String &t_msg);
 
+    void show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections);
     void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj);
     void show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation);
 
@@ -61,8 +63,10 @@ class Game : public sf::Drawable
     void start();
 
     void set_flag(const std::string &t_name, bool t_value);
-
     bool get_flag(const std::string &t_name) const;
+
+    void set_value(const std::string &t_name, int t_value);
+    int get_value(const std::string &t_name) const;
 
     void set_rotate(const float);
     void set_zoom(const float);
@@ -86,6 +90,7 @@ class Game : public sf::Drawable
     std::vector<std::function<void (Game &)>> m_start_actions;
 
     std::map<std::string, bool> m_flags;
+    std::map<std::string, int> m_values;
 
     float m_rotate;
     float m_zoom;

@@ -14,6 +14,7 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   module->add(chaiscript::vector_conversion<std::vector<Answer>>());
   module->add(chaiscript::vector_conversion<std::vector<Question>>());
   module->add(chaiscript::vector_conversion<std::vector<Object_Action>>());
+  module->add(chaiscript::vector_conversion<std::vector<Game_Action>>());
 
 
   module->add(chaiscript::user_type<Game>(), "Game");
@@ -27,6 +28,7 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Game, add_queued_action);
   ADD_FUN(Game, show_message_box);
   ADD_FUN(Game, show_object_interaction_menu);
+  ADD_FUN(Game, show_selection_menu);
   ADD_FUN(Game, show_conversation);
   ADD_FUN(Game, has_pending_events);
   ADD_FUN(Game, get_current_event);
@@ -39,6 +41,8 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Game, start);
   ADD_FUN(Game, set_flag);
   ADD_FUN(Game, get_flag);
+  ADD_FUN(Game, set_value);
+  ADD_FUN(Game, get_value);
   ADD_FUN(Game, set_rotate);
   ADD_FUN(Game, set_zoom);
   ADD_FUN(Game, rotate);

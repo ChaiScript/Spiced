@@ -136,6 +136,11 @@ void Game::show_object_interaction_menu(const float t_game_time, const float t_s
   m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
 }
 
+void Game::show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections)
+{
+  m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_selections));
+}
+
 bool Game::has_pending_events() const
 {
   return !m_game_events.empty();
@@ -284,6 +289,22 @@ void Game::start()
   }
 }
 
+
+void Game::set_value(const std::string &t_name, int t_value)
+{
+  m_values[t_name] = t_value;
+}
+
+int Game::get_value(const std::string &t_name) const
+{
+  const auto itr = m_values.find(t_name);
+  if (itr != m_values.end())
+  {
+    return itr->second;
+  } else {
+    return 0;
+  }
+}
 
 
 void Game::set_flag(const std::string &t_name, bool t_value)

@@ -11,6 +11,9 @@
    </properties>
   </tile>
  </tileset>
+ <tileset firstgid="101" name="pinheads_pinhead" tilewidth="26" tileheight="26">
+  <image source="../pinheads_pinhead.png" width="26" height="26"/>
+ </tileset>
  <layer name="Tile Layer 2" width="30" height="20">
   <data encoding="base64" compression="zlib">
    eJxjYIAAdiimF2AnEtPKXhYgZgViNjQ2re3lBmIeIOZFY9Pa3oEK55FoLylyo2AUjIJRMAqGJwAApTYB7w==
@@ -28,6 +31,8 @@
  </layer>
  <objectgroup name="Object Layer 1">
   <object name="ExitSquare" gid="7" x="160" y="80"/>
+  <object name="Twin1" gid="101" x="12" y="82"/>
+  <object name="Twin2" gid="101" x="28" y="73"/>
  </objectgroup>
  <layer name="Borders" width="30" height="20" opacity="0.44">
   <properties>

@@ -52,6 +52,36 @@
                  "width":0,
                  "x":160,
                  "y":80
+                }, 
+                {
+                 "gid":101,
+                 "height":0,
+                 "name":"Twin1",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":12,
+                 "y":82
+                }, 
+                {
+                 "gid":101,
+                 "height":0,
+                 "name":"Twin2",
+                 "properties":
+                    {
+
+                    },
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":28,
+                 "y":73
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -119,6 +149,21 @@
                 }
             },
          "tilewidth":16
+        }, 
+        {
+         "firstgid":101,
+         "image":"..\/pinheads_pinhead.png",
+         "imageheight":26,
+         "imagewidth":26,
+         "margin":0,
+         "name":"pinheads_pinhead",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":26,
+         "tilewidth":26
         }],
  "tilewidth":16,
  "version":1,

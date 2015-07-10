@@ -11,30 +11,34 @@
    </properties>
   </tile>
  </tileset>
+ <tileset firstgid="101" name="pinheads_pinhead" tilewidth="26" tileheight="26">
+  <image source="../pinheads_pinhead.png" width="26" height="26"/>
+ </tileset>
  <layer name="Tile Layer 2" width="30" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgYwE4kppW9LEDMCsRsaGxa28sNxDxAzIvGprW9AxXOI8XeUTAKRsEoGAWjABkAACV3Abc=
+   eJxjYBh5gJ1ITCt7WYCYFYjZ0Ni0tpcbiHmAmBeNTWt7ByqcR4q9o2AUjIJRMAoGHwAAUUABtw==
   </data>
  </layer>
  <layer name="Tile Layer 1" width="30" height="20">
   <data encoding="base64" compression="zlib">
-   eJyTZWBgkCOA5RmoD1SIUKM2ai9d7KUFGMz+pYW92kCsQwDr0sDeUTAKRsEoGAWDEwAAfxcEew==
+   eJxjYBg4IAvEcgSwPA3sVSFCjdqovXQBw8m/A2WvNhDrEMC6NLB3FIyCUTAKRgFuAABckQR9
   </data>
  </layer>
  <layer name="Tile Layer 3" width="30" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYGBgsARiPSDWx0LbMtAOOACxKRCbYaFdaGSnMhC745H3ppG9IOAHxP5AHADEgWjsIBrZqUwjcwcrGGn+HQWjYBSMglEwOAEAtHsGzg==
+   eJxjYBh4oAfE+lhoWgNTIDbDQtMKKNPQ7FEw8GA0fkfBKBgFo2AUwAAAC24Cnw==
   </data>
  </layer>
  <objectgroup name="Object Layer 1">
-  <object name="ExitSquare" gid="7" x="160" y="80"/>
+  <object name="ExitSquare" gid="7" x="0" y="96"/>
+  <object name="OldMan" gid="101" x="115" y="60"/>
  </objectgroup>
  <layer name="Data Tiles" width="30" height="20" opacity="0.5">
   <properties>
    <property name="visible" value="false"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJwLZWBgCCUCUxsQMne42jsQ4TwQgBh7B8q/wyl+R8EoGAWjYBQMTgAAdA0OSA==
+   eJxjYBg4EEokpoW9+OxHVkMLeylVM1TsJQYMJ/8OpL0DkY9GwSgYBaNgFOAGAKZeDEo=
   </data>
  </layer>
 </map>
