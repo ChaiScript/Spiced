@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" nextobjectid="4">
  <tileset firstgid="1" name="tilesetformattedupdate1" tilewidth="16" tileheight="16">
   <image source="../TileSets/tilesetformattedupdate1.png" width="112" height="192"/>
  </tileset>
@@ -30,9 +30,9 @@
   </data>
  </layer>
  <objectgroup name="Object Layer 1">
-  <object name="ExitSquare" gid="7" x="160" y="80"/>
-  <object name="Twin1" gid="101" x="12" y="82"/>
-  <object name="Twin2" gid="101" x="28" y="73"/>
+  <object id="1" name="ExitSquare" gid="7" x="160" y="80" width="16" height="16"/>
+  <object id="2" name="Dana" gid="101" x="22" y="82" width="26" height="26"/>
+  <object id="3" name="Diane" gid="101" x="39" y="73" width="26" height="26"/>
  </objectgroup>
  <layer name="Borders" width="30" height="20" opacity="0.44">
   <properties>

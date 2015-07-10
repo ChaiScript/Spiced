@@ -35,12 +35,13 @@
         }, 
         {
          "draworder":"topdown",
-         "height":20,
+         "height":0,
          "name":"Object Layer 1",
          "objects":[
                 {
                  "gid":7,
-                 "height":0,
+                 "height":16,
+                 "id":1,
                  "name":"ExitSquare",
                  "properties":
                     {
@@ -49,14 +50,15 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
+                 "width":16,
                  "x":0,
                  "y":96
                 }, 
                 {
                  "gid":101,
-                 "height":0,
-                 "name":"Christian",
+                 "height":26,
+                 "id":2,
+                 "name":"Deborah",
                  "properties":
                     {
 
@@ -64,14 +66,14 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":128,
-                 "y":98
+                 "width":26,
+                 "x":77,
+                 "y":88
                 }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
-         "width":30,
+         "width":0,
          "x":0,
          "y":0
         }, 
@@ -90,6 +92,7 @@
          "x":0,
          "y":0
         }],
+ "nextobjectid":3,
  "orientation":"orthogonal",
  "properties":
     {

@@ -35,12 +35,13 @@
         }, 
         {
          "draworder":"topdown",
-         "height":20,
+         "height":0,
          "name":"Object Layer 1",
          "objects":[
                 {
                  "gid":7,
-                 "height":0,
+                 "height":16,
+                 "id":1,
                  "name":"ExitSquare",
                  "properties":
                     {
@@ -49,14 +50,15 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
+                 "width":16,
                  "x":160,
                  "y":80
                 }, 
                 {
                  "gid":101,
-                 "height":0,
-                 "name":"Twin1",
+                 "height":26,
+                 "id":2,
+                 "name":"Dana",
                  "properties":
                     {
 
@@ -64,14 +66,15 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":12,
+                 "width":26,
+                 "x":22,
                  "y":82
                 }, 
                 {
                  "gid":101,
-                 "height":0,
-                 "name":"Twin2",
+                 "height":26,
+                 "id":3,
+                 "name":"Diane",
                  "properties":
                     {
 
@@ -79,14 +82,14 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":28,
+                 "width":26,
+                 "x":39,
                  "y":73
                 }],
          "opacity":1,
          "type":"objectgroup",
          "visible":true,
-         "width":30,
+         "width":0,
          "x":0,
          "y":0
         }, 
@@ -105,6 +108,7 @@
          "x":0,
          "y":0
         }],
+ "nextobjectid":4,
  "orientation":"orthogonal",
  "properties":
     {

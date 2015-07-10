@@ -17,18 +17,15 @@ class Travel_To {
 }
 
 def refusing_business(t_game) {
-  return t_game.get_flag("christian_shared_verse")
-       && t_game.get_flag("have_spread_rumors")
-       && !t_game.get_flag("did_say_something_nice")
-       && !t_game.get_flag("did_not_respond");
+  return t_game.get_flag("deborah_shared_verse") && t_game.get_flag("have_spread_rumors") && !t_game.get_flag("have_said_something_nice") && !t_game.get_flag("did_not_respond");
 }
 
 def did_make_all_responses(t_game) {
-  return t_game.get_flag("have_talked_to_Twin2") && t_game.get_flag("have_talked_to_YoungEntrepeneur");
+  return t_game.get_flag("have_talked_to_Diane") && t_game.get_flag("have_talked_to_Joshua");
 }
 
-def did_say_something_nice(t_game) {
-  return t_game.get_flag("did_say_something_nice")
+def have_said_something_nice(t_game) {
+  return t_game.get_flag("have_said_something_nice")
 }
 
 def travel_to(t_loc, t_game) {
@@ -245,33 +242,33 @@ var game_creator = fun(game) {
   );
 
 
-  var YoungEntrepeneur_conversation_tree =
+  var Joshua_conversation_tree =
     Conversation([
       Question("Hello",
-        [Answer("YoungEntrepeneur", "Hi! Welcome to Glenn Haven.\nI've just opened up shop here.\nI think you'll like our prices on bread!")],
+        [Answer("Joshua", "Hi! Welcome to Glenn Haven.\nI've just opened up shop here.\nI think you'll like our prices on bread!")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
       ),
       Question("<spread rumors about competitor>",
-        [Answer("YoungEntrepeneur", "That's not a very nice thing to say...")],
+        [Answer("Joshua", "That's not a very nice thing to say...")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_YoungEntrepeneur"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_YoungEntrepeneur", true); t_game.set_flag("have_spread_rumors", true); }
+          t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("have_spread_rumors", true); }
       ),
       Question("<say something nice about competitor>",
-        [Answer("YoungEntrepeneur", "That's good to hear.")],
+        [Answer("Joshua", "That's good to hear.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_YoungEntrepeneur"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_YoungEntrepeneur", true); t_game.set_flag("have_said_something_nice", true); }
+          t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("have_said_something_nice", true); }
       ),
       Question("<say nothing about competitor>",
         [],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_YoungEntrepeneur"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_YoungEntrepeneur", true); t_game.set_flag("did_not_respond", true); }
+          t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("did_not_respond", true); }
       )
 
 
@@ -279,7 +276,7 @@ var game_creator = fun(game) {
 
 
 
-  var YoungEntrepeneur_actions = fun[YoungEntrepeneur_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Joshua_actions = fun[Joshua_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
@@ -288,9 +285,9 @@ var game_creator = fun(game) {
         }
       ),
       Object_Action("Talk To",
-        fun[YoungEntrepeneur_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Joshua_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, YoungEntrepeneur_conversation_tree);
+          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Joshua_conversation_tree);
         }
       ),
       Object_Action("Shop",
@@ -301,8 +298,8 @@ var game_creator = fun(game) {
     ];
   };
 
-  glennhaven.set_collision_action("YoungEntrepeneur", collision_action);
-  glennhaven.set_action_generator("YoungEntrepeneur", YoungEntrepeneur_actions);
+  glennhaven.set_collision_action("Joshua", collision_action);
+  glennhaven.set_action_generator("Joshua", Joshua_actions);
 
   game.add_map("glennhaven", glennhaven);
 
@@ -333,41 +330,41 @@ var game_creator = fun(game) {
     }
   );
 
-  var Christian_conversation_tree =
+  var Deborah_conversation_tree =
     Conversation([
       Question("Hello",
-        [Answer("Christian", "Hi! Welcome to Fairview.")],
+        [Answer("Deborah", "Hi! Welcome to Fairview.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
       ),
       Question("Rumors",
-        [Answer("Christian", "Yes, I've heard the rumors too."),
-         Answer("Christian", "It's an unfortunate way to do business.")],
+        [Answer("Deborah", "Yes, I've heard the rumors too."),
+         Answer("Deborah", "It's an unfortunate way to do business.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.get_flag("have_been_notified_of_rumors"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
       ),
       Question("What should I do?",
-        [Answer("Christian", "Don't retaliate. Rumor mongering is not the best way to do business.")],
+        [Answer("Deborah", "Don't retaliate. Rumor mongering is not the best way to do business.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.get_flag("have_been_notified_of_rumors"); },
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("have_talked_to_christian_about_rumors", true); }
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("have_talked_to_deborah_about_rumors", true); }
       ),
       Question("What now?",
-        [Answer("Christian", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
-         Answer("Christian", "I hope you didn't decide to take matters into your own hands.\nThat rarely works out well.")],
+        [Answer("Deborah", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
+         Answer("Deborah", "I hope you didn't decide to take matters into your own hands.\nThat rarely works out well.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ did_make_all_responses(t_game); },
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("christian_shared_verse", true); }
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("deborah_shared_verse", true); }
         ),
       Question("Note",
-        [Answer("Christian", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
-         Answer("Christian", "This you already know."),
-         Answer("Christian", "Romans 12:20 goes on to say 'But If your enemy is hungry,\nfeed him. If he is thirsty, give him something to drink.\nFor in so doing\nyou will be heaping fiery coals on his head.'"),
-         Answer("Christian", "This is the lesson you've learned today.")],
+        [Answer("Deborah", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
+         Answer("Deborah", "This you already know."),
+         Answer("Deborah", "Romans 12:20 goes on to say 'But If your enemy is hungry,\nfeed him. If he is thirsty, give him something to drink.\nFor in so doing\nyou will be heaping fiery coals on his head.'"),
+         Answer("Deborah", "This is the lesson you've learned today.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.get_flag("saw_note") },
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("christian_shared_second_verse", true); }
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("deborah_shared_second_verse", true); }
         )
     ]);
 
-  var Christian_actions = fun[Christian_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Deborah_actions = fun[Deborah_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
@@ -376,9 +373,9 @@ var game_creator = fun(game) {
         }
       ),
       Object_Action("Talk To",
-        fun[Christian_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Deborah_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Christian_conversation_tree);
+          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Deborah_conversation_tree);
         }
       ),
       Object_Action("Shop",
@@ -389,8 +386,8 @@ var game_creator = fun(game) {
     ];
   };
 
-  fairview.set_collision_action("Christian", collision_action);
-  fairview.set_action_generator("Christian", Christian_actions);
+  fairview.set_collision_action("Deborah", collision_action);
+  fairview.set_action_generator("Deborah", Deborah_actions);
 
   game.add_map("fairview", fairview);
 
@@ -409,42 +406,42 @@ var game_creator = fun(game) {
 
   var mineralville = Tile_Map(game, "resources/Maps/mineralville.json", []);
 
-  var OldMan_conversation_tree =
+  var William_conversation_tree =
     Conversation([
       Question("Rumors",
-        [Answer("OldMan", "You must be the new trader in town.\nYour competitor has been saying unflattering things about you."),
-         Answer("OldMan", "But you seem like a nice person... I'm not sure I believe them.")],
+        [Answer("William", "You must be the new trader in town.\nYour competitor has been saying unflattering things about you."),
+         Answer("William", "But you seem like a nice person... I'm not sure I believe them.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
         fun(t_game_time, t_simulation_time, t_game, t_obj){ t_game.set_flag("have_been_notified_of_rumors", true); }
       ),
       Question("What should I do?",
-        [Answer("OldMan", "Well, if it were me, I'd start spreading rumors of my own about them!\nYou have to fight for what you get.")],
+        [Answer("William", "Well, if it were me, I'd start spreading rumors of my own about them!\nYou have to fight for what you get.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
       ),
       Question("Note?",
-        [Answer("OldMan", "There's a note here from your competitor."),
-         Answer("OldMan", "It says he's sorry for starting those rumors about you, and promises to set things right")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { !t_game.get_flag("saw_note") && did_make_all_responses(t_game) && did_say_something_nice(t_game) },
+        [Answer("William", "There's a note here from your competitor."),
+         Answer("William", "It says he's sorry for starting those rumors about you,\nand promises to set things right")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { !t_game.get_flag("saw_note") && did_make_all_responses(t_game) && have_said_something_nice(t_game) && t_game.get_flag("deborah_shared_verse"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj) { t_game.set_flag("saw_note", true); }
       ),
       Question("Share bible verses you've learned.",
-        [Answer("OldMan", "Well that is interesting...")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj) { t_game.get_flag("christian_shared_second_verse") },
+        [Answer("William", "Well that is interesting...")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj) { t_game.get_flag("deborah_shared_second_verse") },
         fun(t_game_time, t_simulation_time, t_game, t_obj) { }
       )
     ]); 
 
   mineralville.add_enter_action(
-      fun[OldMan_conversation_tree](t_game) {
+      fun[William_conversation_tree](t_game) {
         t_game.teleport_to_tile(2, 5);
 
         if (!t_game.get_flag("have_been_notified_of_rumors")) {
           t_game.show_message_box("You see an old man who has the look of someone who has\nspent many years living in a remote\nmountain town.");
-          t_game.show_message_box("OldMan: There's the person I've been hearing so much about!");
+          t_game.show_message_box("William: There's the person I've been hearing so much about!");
         }
 
-        if (!t_game.get_flag("saw_note") && did_make_all_responses(t_game) && did_say_something_nice(t_game))
+        if (!t_game.get_flag("saw_note") && did_make_all_responses(t_game) && have_said_something_nice(t_game))
         {
           t_game.show_message_box("There's a note over here for you");
         }
@@ -460,18 +457,18 @@ var game_creator = fun(game) {
 
 
 
-  var OldMan_actions = fun[OldMan_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var William_actions = fun[William_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_message_box("The proprietor of this trading post");
+          t_game.show_message_box("An older, somewhat worn looking man.");
         }
       ),
       Object_Action("Talk To",
-        fun[OldMan_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[William_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, OldMan_conversation_tree);
+          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, William_conversation_tree);
         }
       ),
       Object_Action("Shop",
@@ -482,8 +479,8 @@ var game_creator = fun(game) {
     ];
   };
 
-  mineralville.set_collision_action("OldMan", collision_action);
-  mineralville.set_action_generator("OldMan", OldMan_actions);
+  mineralville.set_collision_action("William", collision_action);
+  mineralville.set_action_generator("William", William_actions);
 
 
   game.add_map("mineralville", mineralville);
@@ -503,7 +500,7 @@ var game_creator = fun(game) {
   camp.add_enter_action(
       fun(t_game) {
         if (refusing_business(t_game)) {
-          t_game.show_message_box("We've decided to stop doing business with you because of your rumor spreading.");
+          t_game.show_message_box("We've decided to stop doing business with you\nbecause of your rumor spreading.");
         }
         t_game.teleport_to_tile(9, 4);
       }
@@ -515,33 +512,41 @@ var game_creator = fun(game) {
     }
   );
 
+
   var Twin_conversation_tree =
     Conversation([
       Question("Hello",
-        [Answer("Twin1", "Hi! Welcome to Glenn Haven.\nI've just opened up shop here.\nI think you'll like our prices on bread!")],
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ true },
+        [Answer("Dana", "Hi! Welcome to the archaeological camp here."),
+         Answer("Diane", "The two of us are scientists evaluating the finds from the dig here."),
+         Answer("Diane", "We welcome any supplies you manage to get up here.")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ true; },
         fun(t_game_time, t_simulation_time, t_game, t_obj){  }
       ),
+      Question("You look a lot a like",
+        [Answer("Diane", "Yes, we are twins")],
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ true; },
+        fun(t_game_time, t_simulation_time, t_game, t_obj){ }
+      ),
       Question("<spread rumors about competitor>",
-        [Answer("Twin2", "That's not a very nice thing to say...")],
+        [Answer("Diane", "That's not a very nice thing to say...")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_Twin2"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_Twin2", true); t_game.set_flag("have_spread_rumors", true); }
+          t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("have_spread_rumors", true); }
       ),
       Question("<say something nice about competitor>",
-        [Answer("Twin2", "That's good to hear.")],
+        [Answer("Diane", "That's good to hear.")],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_Twin2"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_Twin2", true); t_game.set_flag("have_said_something_nice", true); }
+          t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("have_said_something_nice", true); }
       ),
       Question("<say nothing about competitor>",
         [],
         fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          t_game.get_flag("have_talked_to_christian_about_rumors") && !t_game.get_flag("have_talked_to_Twin2"); },
+          t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
         fun(t_game_time, t_simulation_time, t_game, t_obj){
-          t_game.set_flag("have_talked_to_Twin2", true); t_game.set_flag("did_not_respond", true); }
+          t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("did_not_respond", true); }
       )
 
     ]);
@@ -551,12 +556,12 @@ var game_creator = fun(game) {
     show_shop_menu(t_game, true, t_game_time, t_simulation_time, 115, 147, 104, 84);
   }
 
-  var Twin1_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Dana_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_message_box("The proprietor of this trading post");
+          t_game.show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
         }
       ),
       Object_Action("Talk To",
@@ -571,15 +576,15 @@ var game_creator = fun(game) {
     ];
   };
 
-  camp.set_collision_action("Twin1", collision_action);
-  camp.set_action_generator("Twin1", Twin1_actions);
+  camp.set_collision_action("Dana", collision_action);
+  camp.set_action_generator("Dana", Dana_actions);
 
-  var Twin2_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Diane_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
     return [
       Object_Action("Look",
         fun(t_game_time, t_simulation_time, t_game, t_obj)
         {
-          t_game.show_message_box("The proprietor of this trading post");
+          t_game.show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
         }
       ),
       Object_Action("Talk To",
@@ -594,8 +599,8 @@ var game_creator = fun(game) {
     ];
   };
 
-  camp.set_collision_action("Twin2", collision_action);
-  camp.set_action_generator("Twin2", Twin2_actions);
+  camp.set_collision_action("Diane", collision_action);
+  camp.set_action_generator("Diane", Diane_actions);
 
 
 
@@ -611,9 +616,14 @@ var game_creator = fun(game) {
 
   game.add_start_action(
       fun(t_game) {
-        t_game.set_value("money", 1000);
+        t_game.set_value("money", 250);
         var money = t_game.get_value("money");
-        t_game.show_message_box("Welcome to the game!\nYou have ${money} to start with.\nUse it wisely.");
+        t_game.show_message_box("Welcome to the game!\nWe wish it had a name - but it doesn't.");
+        t_game.show_message_box("You are a trader of goods set in modern times.\nYou supply the various towns and camps with their material needs.");
+        t_game.show_message_box("Your choices have consequences.\nYou may want to play multiple times.");
+        t_game.show_message_box("To interact with characters and objects simply bump into them.\nAll input is via the arrow keys and enter key.");
+        t_game.show_message_box("Unfortunately we ran out of time for graphics.\nOur NPCs are pinheads.\n\nOur PC is a marble.\n\nOur modern world is a medieval fantasy world.");
+        t_game.show_message_box("You have ${money} to start with.\nUse it wisely.");
         t_game.add_queued_action(
           fun(t_game_time, t_simulation_time, t_game) {
             t_game.enter_map("glennhaven");
