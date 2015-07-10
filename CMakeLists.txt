@@ -150,6 +150,7 @@ if(MINGW OR CYGWIN)
 endif()
 
 include_directories(include)
+include_directories(c:/programming/sfml-2.3/include)
 
 if(NOT MULTITHREAD_SUPPORT_ENABLED)
   add_definitions(-DCHAISCRIPT_NO_THREADS -DCHAISCRIPT_NO_THREADS_WARNING)
@@ -157,7 +158,9 @@ endif()
 
 if(CMAKE_HOST_UNIX)
   if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Haiku")
-    list(APPEND LIBS "dl")
+    if (NOT MINGW AND NOT CYGWIN)
+      list(APPEND LIBS "dl")
+    endif()
   endif()
 
   if(MULTITHREAD_SUPPORT_ENABLED)
@@ -182,7 +185,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 add_executable(game_engine main.cpp game.cpp game_event.cpp map.cpp chaiscript_stdlib.cpp chaiscript_bindings.cpp chaiscript_creator.cpp)
-target_link_libraries(game_engine ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} dl)
+target_link_libraries(game_engine ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} ${LIBS})
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY main.chai DESTINATION ${CMAKE_BINARY_DIR})
 
