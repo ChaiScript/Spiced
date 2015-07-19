@@ -97,7 +97,7 @@ Selection_Menu::Selection_Menu(sf::Font t_font, int t_font_size,
   {
     m_texts.push_back( [t_font_size, t_font_color, &action, &pos, this]()
         {
-          sf::Text txt(action.description, m_font);
+          sf::Text txt(action.description, m_font, t_font_size);
           txt.setColor(t_font_color);
           txt.setPosition(15, pos);
           pos += t_font_size*1.1f;

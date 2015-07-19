@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="18" height="14" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../TileSets/tileset_1.tsx"/>
+ <tileset firstgid="337" name="mountains_0" tilewidth="16" tileheight="16">
+  <image source="../TileSets/mountains_0.png" width="192" height="160"/>
+ </tileset>
+ <tileset firstgid="457" name="info_tiles" tilewidth="16" tileheight="16">
+  <image source="../TileSets/info_tiles.png" width="64" height="64"/>
+  <tile id="0">
+   <properties>
+    <property name="passable" value="false"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="473" name="labels" tilewidth="16" tileheight="16">
+  <image source="../TileSets/labels.png" width="80" height="64"/>
+ </tileset>
+ <layer name="Background" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJwTYmBgEBrFA4L3Usmce0C8HorPDzK3jZozuMwBAEwpGdQ=
+  </data>
+ </layer>
+ <layer name="Mountains" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJy1kjkOwkAMRZMjcDroE5aOYekIS0cCdITlfmzX4BUZYVkWRJaw9KRYE3/9me8sTZIc+jCAIXhqzFyACUxhBh2H1oKZApawgnXjSXuUfW6cb6GECnawF97Cj295hyPUcIIzXAxdqy/VHazSunXjuxK9/sdT3nwz9bY639EXrS5nvfSzF0HM63znLTzFvSjUvNTZtNCJexGJucn8DnCDOzzgCS9DO+6GzEhmdXXm9c96A0cZRJ0=
+  </data>
+ </layer>
+ <layer name="Roads" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJxjYMAENxkZGG4B8W1GLJIkAiVGVGxGBTNBQGWYm+MMpE2hmFQA0qsKxC5AbEyCfme0uILpJdVvyjjUD4Q5zljCYDIZ/sLlFmzm3APy7wPxAyRxWFw6IsUrOnZF49MCAACPyQ4I
+  </data>
+ </layer>
+ <layer name="Cities" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJxjYMAOPuEQJwUwMjIwMDFSwaAhCNSB/tYAYk0K/W8O1G8BxJYUmuMO1O8BxJ4jND7IAV+A+CuJej6j6WMGhjcLELOSGO7o+oSBtAgQi5JoDro+AKeSCFo=
+  </data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object name="camp_signpost" gid="336" x="148" y="32"/>
+  <object name="mineralville_signpost" gid="336" x="165" y="111.5"/>
+  <object name="fairview_signpost" gid="336" x="175" y="208.5"/>
+  <object name="glennhaven_signpost" gid="336" x="64.5" y="209"/>
+  <object name="glennhaven" gid="458" x="15.5" y="208">
+   <properties>
+    <property name="visible" value="false"/>
+   </properties>
+  </object>
+  <object name="fairview" gid="458" x="240" y="208">
+   <properties>
+    <property name="visible" value="false"/>
+   </properties>
+  </object>
+  <object name="mineralville" gid="458" x="239" y="96">
+   <properties>
+    <property name="visible" value="false"/>
+   </properties>
+  </object>
+  <object name="camp" gid="458" x="84.5" y="32">
+   <properties>
+    <property name="visible" value="false"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer name="Data Tiles" width="18" height="14" opacity="0.41">
+  <properties>
+   <property name="visible" value="false"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYMAOTjIi8GAAg809uACyO8l1K7X9SA33DPZwpxUgJuyoEef0cg8AR5sXrQ==
+  </data>
+ </layer>
+ <layer name="Upper Labels" width="18" height="14">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFwx28YGRgeAnEr4D4NRC/YRxoF42CgQIARKYEmA==
+  </data>
+ </layer>
+</map>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" nextobjectid="4">
+ <tileset firstgid="1" name="tilesetformattedupdate1" tilewidth="16" tileheight="16">
+  <image source="../TileSets/tilesetformattedupdate1.png" width="112" height="192"/>
+ </tileset>
+ <tileset firstgid="85" name="info_tiles" tilewidth="16" tileheight="16">
+  <image source="../TileSets/info_tiles.png" width="64" height="64"/>
+  <tile id="0">
+   <properties>
+    <property name="passable" value="false"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="101" name="pinheads_pinhead" tilewidth="26" tileheight="26">
+  <image source="../pinheads_pinhead.png" width="26" height="26"/>
+ </tileset>
+ <layer name="Tile Layer 2" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYIAAdiimF2AnEtPKXhYgZgViNjQ2re3lBmIeIOZFY9Pa3oEK55FoLylyo2AUjIJRMAqGJwAApTYB7w==
+  </data>
+ </layer>
+ <layer name="Tile Layer 1" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJyTZWBgkCOA5RmoD1SIUKM2ai9d7KUFGMz+pYW92kCsQwDr0sDeUTAKRsEoGAWDEwAAfxcEew==
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYGBgsARiPSDWx0LbMtAOOACxKRCbYaFdaGSnMhC745H3ppG9IOAHxP5AHADEgWjsIBrZqUwjcwcrGGn+HQWjYBSMglEwOAEAtHsGzg==
+  </data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object id="1" name="ExitSquare" gid="7" x="160" y="80" width="16" height="16"/>
+  <object id="2" name="Dana" gid="101" x="22" y="82" width="26" height="26"/>
+  <object id="3" name="Diane" gid="101" x="39" y="73" width="26" height="26"/>
+ </objectgroup>
+ <layer name="Borders" width="30" height="20" opacity="0.44">
+  <properties>
+   <property name="visible" value="false"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJwLZWBgCCUCUxsQMne42jsQ4TwQgBh7B8q/wyl+R8EoGAWjYBQMTgAAdA0OSA==
+  </data>
+ </layer>
+</map>

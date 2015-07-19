@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="20" tilewidth="16" tileheight="16" nextobjectid="4">
+ <tileset firstgid="1" name="tilesetformattedupdate1" tilewidth="16" tileheight="16">
+  <image source="../TileSets/tilesetformattedupdate1.png" width="112" height="192"/>
+ </tileset>
+ <tileset firstgid="85" name="candle" tilewidth="16" tileheight="16">
+  <image source="../TileSets/candle.png" width="32" height="32"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="100"/>
+    <frame tileid="2" duration="100"/>
+    <frame tileid="1" duration="100"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="89" name="info_tiles" tilewidth="16" tileheight="16">
+  <image source="../TileSets/info_tiles.png" width="64" height="64"/>
+  <tile id="0">
+   <properties>
+    <property name="passable" value="false"/>
+    <property name="visible" value="false"/>
+   </properties>
+   <objectgroup draworder="index">
+    <object id="0" x="7" y="0" width="19" height="16"/>
+   </objectgroup>
+  </tile>
+  <tile id="1">
+   <properties>
+    <property name="visible" value="false"/>
+   </properties>
+  </tile>
+ </tileset>
+ <tileset firstgid="105" name="pinheads_pinhead" tilewidth="26" tileheight="26">
+  <image source="../pinheads_pinhead.png" width="26" height="26"/>
+ </tileset>
+ <layer name="Tile Layer 2" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYIAAdiimF2AnEtPKXhYgZgViNjQ2re3lBmIeIOZFY9Pa3oEK55FoLylyo2AUjIJRMAqGJwAApTYB7w==
+  </data>
+ </layer>
+ <layer name="Tile Layer 1" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJyTZWBgkCOA5RmoD1SIUKM2ai9d7KUFGMz+pYW92kCsQwDr0sDeUTAKRsEoGAWDEwAAfxcEew==
+  </data>
+ </layer>
+ <layer name="Tile Layer 3" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJxjYGBgsARiPSDWx0LbMtAOOACxKRCbYaFdaGSnMhC745H3ppG9IOAHxP5AHADEgWjsIBrZqUwjcwcrGGn+HQWjYBSMglEwOAEAtHsGzg==
+  </data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <object id="1" name="ExitSquare" gid="7" x="160" y="80" width="16" height="16"/>
+  <object id="2" name="Candle" gid="85" x="119" y="54" width="16" height="16"/>
+  <object id="3" name="Joshua" gid="105" x="54" y="91" width="26" height="26"/>
+ </objectgroup>
+ <layer name="DataTiles" width="30" height="20" opacity="0.6">
+  <properties>
+   <property name="visible" value="false"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJyLZGBgiCQCUxsQMne42jsQ4TwQgBh7B8q/wyl+R8EoGAWjYBQMTgAAskgO9A==
+  </data>
+ </layer>
+</map>

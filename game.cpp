@@ -12,7 +12,9 @@
 
 
 Game::Game()
-  : m_map(m_maps.end())
+  : m_map(m_maps.end()),
+    m_rotate(0),
+    m_zoom(1)
 {
 }
 
@@ -39,9 +41,22 @@ void Game::teleport_to(const float x, const float y)
   m_avatar.setPosition(x, y);
 }
 
-void Game::set_avatar(const sf::Sprite &t_avatar)
+void Game::teleport_to_tile(const int t_x, const int t_y)
 {
-  m_avatar = t_avatar;
+  if (m_map == m_maps.end()) throw std::logic_error("No map currently defined when attempting teleport_to_tile");
+
+  const auto tile_size = m_map->second.tile_size();
+  const auto avatar_size = m_avatar.getTextureRect();
+
+  const auto x = (tile_size.x * t_x) + ((tile_size.x - avatar_size.width) / 2);
+  const auto y = (tile_size.y * t_y) + ((tile_size.y - avatar_size.height) / 2);
+
+  teleport_to(x,y);
+}
+
+void Game::set_avatar(const sf::Texture &t_avatar)
+{
+  m_avatar = sf::Sprite(t_avatar);
 }
 
 void Game::add_map(const std::string &t_name, const Tile_Map &t_map)
@@ -79,7 +94,7 @@ void Game::add_queued_action(const std::function<void (const float, const float,
 
 void Game::show_message_box(const sf::String &t_msg)
 {
-  m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
+  m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3));
 }
 
 void Game::show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation)
@@ -113,12 +128,17 @@ void Game::show_conversation(const float t_game_time, const float t_simulation_t
   }
 
 
-  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, actions));
+  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, actions));
 }
 
 void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj)
 {
-  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 20, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
+  m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
+}
+
+void Game::show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections)
+{
+  m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_selections));
 }
 
 bool Game::has_pending_events() const
@@ -203,8 +223,25 @@ sf::Vector2f Game::get_input_direction_vector()
   return velocity;
 }
 
+bool Game::show_mini_map() const {
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::M)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool Game::show_invisible() const {
+  if (sf::Keyboard::isKeyPressed(sf::Keyboard::V)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void Game::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
+
   if (m_map != m_maps.end())
   {
     target.draw(m_map->second, states);
@@ -252,10 +289,23 @@ void Game::start()
   }
 }
 
-void Game::set_flag(const std::string &t_name)
+
+void Game::set_value(const std::string &t_name, int t_value)
 {
-  set_flag(t_name, true);
+  m_values[t_name] = t_value;
 }
+
+int Game::get_value(const std::string &t_name) const
+{
+  const auto itr = m_values.find(t_name);
+  if (itr != m_values.end())
+  {
+    return itr->second;
+  } else {
+    return 0;
+  }
+}
+
 
 void Game::set_flag(const std::string &t_name, bool t_value)
 {
@@ -272,5 +322,26 @@ bool Game::get_flag(const std::string &t_name) const
     return false;
   }
 }
+
+void Game::set_rotate(const float t_r)
+{
+  m_rotate = t_r;
+}
+
+void Game::set_zoom(const float t_z)
+{
+  m_zoom = t_z;
+}
+
+float Game::rotate()
+{
+  return m_rotate;
+}
+
+float Game::zoom()
+{
+  return m_zoom;
+}
+
 
 
