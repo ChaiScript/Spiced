@@ -3,10 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
-#include <deque>
 #include <memory>
-#include <cassert>
-#include <cmath>
 
 #include "game.hpp"
 #include "game_event.hpp"
@@ -14,23 +11,17 @@
 #include "chaiscript_creator.hpp"
 #include "ChaiScript/include/chaiscript/chaiscript.hpp"
 
+void show_error(const std::string &t_what)
+{
+  std::cout << "An unhandled error has occured:\n" << t_what << std::endl;
+
+  MessageBox(nullptr, t_what.c_str(), nullptr, MB_ICONERROR | MB_OK);
+}
+
 Game build_chai_game(chaiscript::ChaiScript &chai)
 {
   Game game;
-
-  try {
-    chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("main.chai"))(game);
-  }
-  catch (const chaiscript::exception::eval_error &ee) {
-    std::cout << ee.pretty_print();
-    std::cout << '\n';
-    throw;
-  }
-  catch (std::exception &e) {
-    std::cout << e.what() << '\n';
-    throw;
-  }
-
+  chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("spiced.chai"))(game);
   return game;
 }
 
@@ -38,7 +29,6 @@ Game build_chai_game(chaiscript::ChaiScript &chai)
 int main()
 {
   try {
-
     // create the window
     sf::RenderWindow window(sf::VideoMode(800, 600), "Tilemap");
 
@@ -125,9 +115,9 @@ int main()
     }
   }
   catch (const chaiscript::exception::eval_error &ee) {
-    std::cout << ee.pretty_print();
-    std::cout << '\n';
-    throw;
+    show_error(ee.pretty_print());
+  } catch (const std::exception &e) {
+    show_error(e.what());
   }
 }
 

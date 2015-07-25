@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 2.8)
 
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.1")
+  cmake_policy(SET CMP0054 NEW)
+endif()
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
 project(Spiced)
 
-find_library(SFML_GRAPHICS sfml-graphics)
-find_library(SFML_WINDOW sfml-window)
-find_library(SFML_SYSTEM sfml-system)
+find_package(SFML 2 REQUIRED system window graphics network audio main)
 
 
 # MINGW does not yet support C++11's concurrency features
@@ -77,7 +81,7 @@ endif()
 
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
-set(CPACK_PACKAGE_VERSION_PATCH 1)
+set(CPACK_PACKAGE_VERSION_PATCH 0)
 
 set(CPACK_PACKAGE_EXECUTABLES "spiced;Spiced Game Interperter")
 set(CPACK_PACKAGE_VENDOR "ChaiScript.com")
@@ -112,7 +116,7 @@ endif()
 if(MSVC)
   add_definitions(/W4 /w44640)
   add_definitions(/bigobj)
-#  add_definitions(-DSFML_STATIC)
+ 
   # Note on MSVC compiler flags.
   # The code base selective disables warnings as necessary when the compiler is complaining too much
   # about something that is perfectly valid, or there is simply no technical way around it
@@ -148,8 +152,6 @@ if(MINGW OR CYGWIN)
   add_definitions(-O3)
 endif()
 
-include_directories(include)
-include_directories(c:/programming/sfml-2.3/include)
 
 if(NOT MULTITHREAD_SUPPORT_ENABLED)
   add_definitions(-DCHAISCRIPT_NO_THREADS -DCHAISCRIPT_NO_THREADS_WARNING)
@@ -183,9 +185,13 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
-add_executable(spiced src/main.cpp src/game.cpp src/game_event.cpp src/map.cpp src/chaiscript_stdlib.cpp src/chaiscript_bindings.cpp src/chaiscript_creator.cpp)
+add_executable(spiced WIN32 src/main.cpp src/game.cpp src/game_event.cpp src/map.cpp src/chaiscript_stdlib.cpp src/chaiscript_bindings.cpp src/chaiscript_creator.cpp)
 target_link_libraries(spiced ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} ${LIBS})
 file(COPY sample_game DESTINATION ${CMAKE_BINARY_DIR})
+
+
+include_directories(${SFML_INCLUDE_DIR})
+target_link_libraries(spiced ${SFML_LIBRARIES})
 
 install(TARGETS spiced RUNTIME DESTINATION bin)
 
