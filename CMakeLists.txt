@@ -114,6 +114,7 @@ endif()
 if(MSVC)
   add_definitions(/W4 /w44640)
   add_definitions(/bigobj)
+#  add_definitions(-DSFML_STATIC)
   # Note on MSVC compiler flags.
   # The code base selective disables warnings as necessary when the compiler is complaining too much
   # about something that is perfectly valid, or there is simply no technical way around it
