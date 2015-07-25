@@ -81,13 +81,14 @@ void Message_Box::draw(sf::RenderTarget& target, sf::RenderStates states) const
 
 Selection_Menu::Selection_Menu(sf::Font t_font, int t_font_size,
     sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-    std::vector<Game_Action> t_actions)
+    std::vector<Game_Action> t_actions, const size_t t_selection)
 : Game_Event(),
   m_font(std::move(t_font)), m_font_color(std::move(t_font_color)), 
   m_selected_color(std::move(t_selected_font_color)),
   m_selected_cur_color(m_selected_color),
   m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
-  m_outline_thickness(t_outlineThickness), m_actions(std::move(t_actions))
+  m_outline_thickness(t_outlineThickness), m_actions(std::move(t_actions)),
+  m_current_item(t_selection)
 {
   setPosition(10,10);
 
@@ -135,17 +136,22 @@ void Selection_Menu::update(const float t_game_time, const float t_simulation_ti
     }
   }(Game::get_input_direction_vector());
 
-  if (m_last_direction != direction)
-  {
-    m_current_item += direction;
-  }
+  const auto new_item = [&]() {
+    if (m_last_direction != direction)
+    {
+      if (m_current_item == 0 && direction == -1) {
+        return m_actions.size() - 1;
+      } else if (m_current_item == (m_actions.size() - 1) && direction == 1) {
+        return size_t(0);
+      } else {
+        return m_current_item += direction;
+      }
+    } else {
+      return m_current_item;
+    }
+  }();
 
-  if (m_current_item < 0) {
-    m_current_item = m_actions.size() - 1;
-  } else if (m_current_item == static_cast<int>(m_actions.size())) {
-    m_current_item = 0;
-  }
-
+  m_current_item = new_item;
   m_last_direction = direction;
 }
 
@@ -204,7 +210,7 @@ Object_Interaction_Menu::Object_Interaction_Menu(Object &t_obj, sf::Font t_font,
       }
 
       return res;
-    }(t_actions, t_obj))
+    }(t_actions, t_obj), 0)
 {
 }
 

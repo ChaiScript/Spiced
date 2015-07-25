@@ -363,12 +363,12 @@ Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Til
           //props.emplace(property.first, property.second.ToString());
         }
 
-        const auto get_float = [&](const std::string &t_name){
+        const auto get_float = [&](const std::string &t_name) {
           auto v = obj.at(t_name);
           if (v.JSONType() == json::JSON::Class::Floating) {
-            return v.ToFloat();
+            return float(v.ToFloat());
           } else {
-            return double(v.ToInt());
+            return float(v.ToInt());
           }
         };
 
@@ -439,7 +439,9 @@ void Tile_Map::load(sf::Vector2u t_tile_size, const std::vector<Layer> &layers, 
               }
             };
 
-            m_tile_data.emplace_back(i, j, tilePropsFunc(), sf::FloatRect(i * t_tile_size.x, j * t_tile_size.y, t_tile_size.x, t_tile_size.y));
+            m_tile_data.emplace_back(i, j, tilePropsFunc(), 
+              sf::FloatRect(float(i * t_tile_size.x), float(j * t_tile_size.y), float(t_tile_size.x), float(t_tile_size.y)));
+
             const auto tilesetvertices = tileset.vertices(tileNumber, i, j);
             for (size_t index = 0; index < tilesetvertices.getVertexCount(); ++index) 
             {
@@ -630,3 +632,92 @@ sf::Vector2u Tile_Map::tile_size() const
 }
 
 
+Tileset::Tileset(std::reference_wrapper<const sf::Texture> t_texture, const int t_first_gid, const int t_tile_width, const int t_tile_height,
+	std::map<int, Animation> t_anim)
+	: texture(std::move(t_texture)), first_gid(t_first_gid), tile_width(t_tile_width), tile_height(t_tile_height),
+	anim(std::move(t_anim))
+{
+
+}
+
+int Tileset::min_gid() const {
+	return first_gid;
+}
+
+int Tileset::max_gid() const {
+	return first_gid + (texture.get().getSize().x / tile_width) * (texture.get().getSize().y / tile_height) - 1;
+}
+
+sf::IntRect Tileset::get_rect(const int gid, const float t_game_time) const
+{
+	const int frame_gid = [&]() {
+		auto a = anim.find(gid);
+		if (a == anim.end())
+		{
+			return gid;
+		}
+		else {
+			// calculate frame
+			const auto runtime = std::accumulate(a->second.begin(), a->second.end(), 0,
+				[](int sum, const Frame &f) {
+				return sum + f.duration;
+			}) / 1000.0f;
+
+
+			const auto time_into_current_loop = std::fabs(std::fmod(t_game_time, runtime));
+
+
+			return [&]() {
+				auto time_left = time_into_current_loop * 1000;
+				for (const Frame &f : a->second) {
+					time_left -= f.duration;
+					if (time_left <= 0) {
+						return f.tileid;
+					}
+				}
+				assert(false);
+				return a->second.back().tileid;
+			}();
+
+		}
+	}();
+
+	auto loc = location(frame_gid);
+	return sf::IntRect(loc.x * tile_width, loc.y * tile_height, tile_width, tile_height);
+}
+
+sf::Vector2i Tileset::location(const int gid) const
+{
+	const auto num_horz_tiles = texture.get().getSize().x / tile_width;
+	const auto id = gid - first_gid;
+
+	return sf::Vector2i(id % num_horz_tiles, id / num_horz_tiles);
+}
+
+sf::VertexArray Tileset::vertices(const int gid, const int i, const int j) const
+{
+	const auto loc = location(gid);
+
+	const auto tu = loc.x;
+	const auto tv = loc.y;
+
+	sf::VertexArray verts(sf::Quads);
+
+	verts.append(sf::Vertex(
+		sf::Vector2f(float(i * tile_width), float(j * tile_height)),
+		sf::Vector2f(float(tu * tile_width), float(tv * tile_height))));
+
+	verts.append(sf::Vertex(
+		sf::Vector2f(float((i + 1) * tile_width), float(j * tile_height)),
+		sf::Vector2f(float((tu + 1) * tile_width), float(tv * tile_height))));
+
+	verts.append(sf::Vertex(
+		sf::Vector2f(float((i + 1) * tile_width), float((j + 1) * tile_height)),
+		sf::Vector2f(float((tu + 1) * tile_width), float((tv + 1) * tile_height))));
+
+	verts.append(sf::Vertex(
+		sf::Vector2f(float(i * tile_width), float((j + 1) * tile_height)),
+		sf::Vector2f(float(tu * tile_width), float((tv + 1) * tile_height))));
+
+	return verts;
+}

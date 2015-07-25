@@ -11,8 +11,8 @@
 class Tile_Map;
 class Object;
 class Game_Event;
-class Game_Action;
-class Conversation;
+struct Game_Action;
+struct Conversation;
 
 class Game : public sf::Drawable
 {
@@ -38,7 +38,7 @@ class Game : public sf::Drawable
 
     void show_message_box(const sf::String &t_msg);
 
-    void show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections);
+    void show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections, const size_t t_selection = 0);
     void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj);
     void show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation);
 

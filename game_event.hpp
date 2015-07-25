@@ -7,8 +7,8 @@
 
 class Object;
 class Game;
-class Object_Action;
-class Game_Action;
+struct Object_Action;
+struct Game_Action;
 
 struct Answer
 {
@@ -114,16 +114,17 @@ class Selection_Menu : public Game_Event
   public:
     Selection_Menu(sf::Font t_font, int t_font_size,
         sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-        std::vector<Game_Action> t_actions);
+        std::vector<Game_Action> t_actions,
+        const size_t t_selection);
 
     virtual ~Selection_Menu() = default;
 
-    virtual void update(const float t_game_time, const float t_simulation_time, Game &t_game);
+    virtual void update(const float t_game_time, const float t_simulation_time, Game &t_game) override;
 
-    virtual bool is_done() const;
+    virtual bool is_done() const override;
 
   protected:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
   private:
     sf::Font m_font;
@@ -135,7 +136,7 @@ class Selection_Menu : public Game_Event
     float m_outline_thickness;
     std::vector<sf::Text> m_texts;
 
-    int m_current_item = 0;
+    size_t m_current_item = 0;
     int m_last_direction = 0;
     float m_start_time = 0;
     bool m_is_done = false;

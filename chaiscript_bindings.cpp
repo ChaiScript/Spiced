@@ -9,7 +9,7 @@
 
 std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
 {
-  auto module = std::shared_ptr<chaiscript::Module>(new chaiscript::Module());
+  auto module = std::make_shared<chaiscript::Module>();
   module->add(chaiscript::vector_conversion<std::vector<Tile_Defaults>>());
   module->add(chaiscript::vector_conversion<std::vector<Answer>>());
   module->add(chaiscript::vector_conversion<std::vector<Question>>());
@@ -29,6 +29,11 @@ std::shared_ptr<chaiscript::Module> create_chaiscript_bindings()
   ADD_FUN(Game, show_message_box);
   ADD_FUN(Game, show_object_interaction_menu);
   ADD_FUN(Game, show_selection_menu);
+  module->add(
+    chaiscript::fun([](Game &t_game, const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections)
+    {
+      t_game.show_selection_menu(t_game_time, t_simulation_time, t_selections);
+    }), "show_selection_menu");
   ADD_FUN(Game, show_conversation);
   ADD_FUN(Game, has_pending_events);
   ADD_FUN(Game, get_current_event);

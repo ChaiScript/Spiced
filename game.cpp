@@ -51,7 +51,7 @@ void Game::teleport_to_tile(const int t_x, const int t_y)
   const auto x = (tile_size.x * t_x) + ((tile_size.x - avatar_size.width) / 2);
   const auto y = (tile_size.y * t_y) + ((tile_size.y - avatar_size.height) / 2);
 
-  teleport_to(x,y);
+  teleport_to(float(x), float(y));
 }
 
 void Game::set_avatar(const sf::Texture &t_avatar)
@@ -136,9 +136,9 @@ void Game::show_object_interaction_menu(const float t_game_time, const float t_s
   m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
 }
 
-void Game::show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections)
+void Game::show_selection_menu(const float /*t_game_time*/, const float /*t_simulation_time*/, const std::vector<Game_Action> &t_selections, const size_t t_selection)
 {
-  m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_selections));
+  m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255,255,255,255), sf::Color(0,200,200,255), sf::Color(0,0,0,128), sf::Color(255,255,255,200), 3, t_selections, t_selection));
 }
 
 bool Game::has_pending_events() const
