@@ -8,6 +8,17 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
 project(Spiced)
 
+if (MSVC OR MINGW)
+  option(STATIC_SFML "Link SFML Statically" TRUE)
+else()
+  option(STATIC_SFML "Link SFML Statically" FALSE)
+endif()
+
+
+if (STATIC_SFML)
+  set(SFML_STATIC_LIBRARIES TRUE)
+endif()
+
 find_package(SFML 2 REQUIRED system window graphics network audio main)
 
 
@@ -185,13 +196,17 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
+if (STATIC_SFML)
+  list(APPEND LIBS ${SFML_DEPENDENCIES})
+endif()
+
 add_executable(spiced WIN32 src/main.cpp src/game.cpp src/game_event.cpp src/map.cpp src/chaiscript_stdlib.cpp src/chaiscript_bindings.cpp src/chaiscript_creator.cpp)
-target_link_libraries(spiced ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} ${LIBS})
+target_link_libraries(spiced ${SFML_LIBRARIES} ${LIBS})
+include_directories(${SFML_INCLUDE_DIR})
+
+
 file(COPY sample_game DESTINATION ${CMAKE_BINARY_DIR})
 
-
-include_directories(${SFML_INCLUDE_DIR})
-target_link_libraries(spiced ${SFML_LIBRARIES})
 
 install(TARGETS spiced RUNTIME DESTINATION bin)
 
