@@ -136,12 +136,13 @@ class Selection_Menu : public Game_Event
     float m_outline_thickness;
     std::vector<sf::Text> m_texts;
 
+    std::vector<Game_Action> m_actions;
+
     size_t m_current_item = 0;
     int m_last_direction = 0;
     float m_start_time = 0;
     bool m_is_done = false;
 
-    std::vector<Game_Action> m_actions;
 };
 
 

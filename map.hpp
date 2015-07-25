@@ -6,7 +6,6 @@
 #include <cassert>
 #include <iostream>
 #include <numeric>
-#include "../../sfml-2.3/include/SFML/System/Vector2.hpp"
 
 class Game;
 
@@ -28,10 +27,10 @@ typedef std::vector<Frame> Animation;
 struct Tileset
 {
 
-	Tileset(std::reference_wrapper<const sf::Texture> t_texture, const int t_first_gid, const int t_tile_width, const int t_tile_height,
-		std::map<int, Animation> t_anim);
+  Tileset(std::reference_wrapper<const sf::Texture> t_texture, const int t_first_gid, const int t_tile_width, const int t_tile_height,
+      std::map<int, Animation> t_anim);
 
-	int min_gid() const;
+  int min_gid() const;
   int max_gid() const;
 
   sf::IntRect get_rect(const int gid, const float t_game_time) const;

@@ -176,7 +176,7 @@ void Selection_Menu::draw(sf::RenderTarget& target, sf::RenderStates states) con
 
   target.draw(rect, states);
 
-  auto item = 0;
+  auto item = 0u;
   for (auto txt : m_texts)
   {
     if (m_current_item == item)
