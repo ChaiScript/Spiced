@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(chaiscript)
+project(Spiced)
 
 find_library(SFML_GRAPHICS sfml-graphics)
 find_library(SFML_WINDOW sfml-window)
@@ -79,7 +79,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 0)
 set(CPACK_PACKAGE_VERSION_PATCH 1)
 
-set(CPACK_PACKAGE_EXECUTABLES "game_engine;Game Engine Interperter")
+set(CPACK_PACKAGE_EXECUTABLES "spiced;Spiced Game Interperter")
 set(CPACK_PACKAGE_VENDOR "ChaiScript.com")
 set(CPACK_PACKAGE_CONTACT "contact@chaiscript.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A game engine")
@@ -94,10 +94,8 @@ set(CHAI_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.$
 
 #configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/Doxyfile)
 
-include(CTest)
 include(CPack)
 
-enable_testing()
 
 if(CMAKE_COMPILER_IS_GNUCC)
   execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
@@ -185,11 +183,10 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
-add_executable(game_engine main.cpp game.cpp game_event.cpp map.cpp chaiscript_stdlib.cpp chaiscript_bindings.cpp chaiscript_creator.cpp)
-target_link_libraries(game_engine ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} ${LIBS})
-file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY main.chai DESTINATION ${CMAKE_BINARY_DIR})
+add_executable(spiced src/main.cpp src/game.cpp src/game_event.cpp src/map.cpp src/chaiscript_stdlib.cpp src/chaiscript_bindings.cpp src/chaiscript_creator.cpp)
+target_link_libraries(spiced ${SFML_GRAPHICS} ${SFML_WINDOW} ${SFML_SYSTEM} ${LIBS})
+file(COPY sample_game DESTINATION ${CMAKE_BINARY_DIR})
 
-install(TARGETS game_engine RUNTIME DESTINATION bin)
+install(TARGETS spiced RUNTIME DESTINATION bin)
 
 
