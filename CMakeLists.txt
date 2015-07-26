@@ -208,6 +208,12 @@ include_directories(${SFML_INCLUDE_DIR})
 file(COPY sample_game DESTINATION ${CMAKE_BINARY_DIR})
 
 
-install(TARGETS spiced RUNTIME DESTINATION bin)
+if (CMAKE_HOST_WIN32)
+  install(TARGETS spiced RUNTIME DESTINATION .)
+  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/sample_game/ DESTINATION .)
+else()
+  install(TARGETS spiced RUNTIME DESTINATION bin)
+endif()
+
 
 

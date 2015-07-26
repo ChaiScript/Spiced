@@ -628,7 +628,7 @@ var game_creator = fun(game) {
         t_game.show_message_box("Your choices have consequences.\nYou may want to play multiple times.");
         t_game.show_message_box("To interact with characters and objects simply bump into them.\nAll input is via the arrow keys and enter key.");
         t_game.show_message_box("Unfortunately we ran out of time for graphics.\nOur NPCs are pinheads.\n\nOur PC is a marble.\n\nOur modern world is a medieval fantasy world.");
-        t_game.show_message_box("You have ${money} to start with.\nUse it wisely.");
+        t_game.show_message_box("You have $${money} to start with.\nUse it wisely.");
         t_game.add_queued_action(
           fun(t_game_time, t_simulation_time, t_game) {
             t_game.enter_map("glennhaven");

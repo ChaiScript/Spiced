@@ -173,7 +173,7 @@ void Game::update(const float t_game_time, const float t_simulation_time)
   if (m_map != m_maps.end())
   {
     auto &map = m_map->second;
-    auto distance = Game::get_input_direction_vector() * 20.0f * simulation_time;
+    auto distance = Game::get_input_direction_vector() * 40.0f * simulation_time;
     for (auto &collision : map.get_collisions(m_avatar, distance))
     {
       collision.get().do_collision(t_game_time, simulation_time, *this, m_avatar);
