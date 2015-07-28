@@ -6,6 +6,8 @@ namespace chaiscript {
   class ChaiScript;
 }
 
-std::unique_ptr<chaiscript::ChaiScript> create_chaiscript();
+namespace spiced {
+  std::unique_ptr<chaiscript::ChaiScript> create_chaiscript();
+}
 
 #endif

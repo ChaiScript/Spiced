@@ -21,14 +21,9 @@ endif()
 
 find_package(SFML 2 REQUIRED system window graphics network audio main)
 
+option(MULTITHREAD_SUPPORT_ENABLED "Multithreaded Support Enabled" FALSE)
 
-# MINGW does not yet support C++11's concurrency features
-if(MINGW)
-  option(MULTITHREAD_SUPPORT_ENABLED "Multithreaded Support Enabled" FALSE)
-else()
-  option(MULTITHREAD_SUPPORT_ENABLED "Multithreaded Support Enabled" TRUE)
-endif()
-
+find_program(CPACK_IFW_BINARYCREATOR_EXECUTABLE name binarycreator.exe PATHS "C:/Qt/QtIFW2.0.1/bin")
 
 if(CMAKE_COMPILER_IS_GNUCC)
   option(ENABLE_COVERAGE "Enable Coverage Reporting in GCC" FALSE)
@@ -210,7 +205,8 @@ file(COPY sample_game DESTINATION ${CMAKE_BINARY_DIR})
 
 if (CMAKE_HOST_WIN32)
   install(TARGETS spiced RUNTIME DESTINATION .)
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/sample_game/ DESTINATION .)
+  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/sample_game/ DESTINATION .
+          PATTERN "*~" EXCLUDE)
 else()
   install(TARGETS spiced RUNTIME DESTINATION bin)
 endif()

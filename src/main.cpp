@@ -18,10 +18,10 @@ void show_error(const std::string &t_what)
   MessageBox(nullptr, t_what.c_str(), nullptr, MB_ICONERROR | MB_OK);
 }
 
-Game build_chai_game(chaiscript::ChaiScript &chai)
+spiced::Game build_chai_game(chaiscript::ChaiScript &chai)
 {
-  Game game;
-  chai.boxed_cast<std::function<void (Game &)>>(chai.eval_file("spiced.chai"))(game);
+  spiced::Game game;
+  chai.boxed_cast<std::function<void (spiced::Game &)>>(chai.eval_file("spiced.chai"))(game);
   return game;
 }
 
@@ -33,7 +33,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(800, 600), "Tilemap");
 
     window.setVerticalSyncEnabled(true);
-    auto chaiscript = create_chaiscript();
+    auto chaiscript = spiced::create_chaiscript();
 
     auto game = build_chai_game(*chaiscript);
 

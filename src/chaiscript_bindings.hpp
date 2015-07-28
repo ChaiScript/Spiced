@@ -6,6 +6,8 @@ namespace chaiscript {
   class Module;
 }
 
-std::shared_ptr<chaiscript::Module> create_chaiscript_bindings();
+namespace spiced {
+  std::shared_ptr<chaiscript::Module> create_chaiscript_bindings();
+}
 
 #endif

@@ -8,14 +8,15 @@
 #include <map>
 #include <string>
 
-class Tile_Map;
-class Object;
-class Game_Event;
-struct Game_Action;
-struct Conversation;
+namespace spiced {
+  class Tile_Map;
+  class Object;
+  class Game_Event;
+  struct Game_Action;
+  struct Conversation;
 
-class Game : public sf::Drawable
-{
+  class Game : public sf::Drawable
+  {
   public:
     Game();
     Game(const Game &) = delete;
@@ -32,9 +33,9 @@ class Game : public sf::Drawable
 
     void add_map(const std::string &t_name, const Tile_Map &t_map);
 
-    void add_start_action(const std::function<void (Game &)> &t_action);
+    void add_start_action(const std::function<void(Game &)> &t_action);
 
-    void add_queued_action(const std::function<void (const float t_game_time, const float t_simulation_time, Game &)> &t_action);
+    void add_queued_action(const std::function<void(const float t_game_time, const float t_simulation_time, Game &)> &t_action);
 
     void show_message_box(const sf::String &t_msg);
 
@@ -87,16 +88,16 @@ class Game : public sf::Drawable
 
     sf::Sprite m_avatar;
     std::map<std::string, Tile_Map>::iterator m_map;
-    std::vector<std::function<void (Game &)>> m_start_actions;
+    std::vector<std::function<void(Game &)>> m_start_actions;
 
     std::map<std::string, bool> m_flags;
     std::map<std::string, int> m_values;
 
     float m_rotate;
     float m_zoom;
-};
+  };
 
-
+}
 
 #endif
 
