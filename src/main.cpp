@@ -15,7 +15,9 @@ void show_error(const std::string &t_what)
 {
   std::cout << "An unhandled error has occured:\n" << t_what << std::endl;
 
+#ifdef _WIN32
   MessageBox(nullptr, t_what.c_str(), nullptr, MB_ICONERROR | MB_OK);
+#endif
 }
 
 spiced::Game build_chai_game(chaiscript::ChaiScript &chai)

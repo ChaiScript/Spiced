@@ -14,16 +14,20 @@ else()
   option(STATIC_SFML "Link SFML Statically" FALSE)
 endif()
 
+option(MULTITHREAD_SUPPORT_ENABLED "Multithreaded Support Enabled" FALSE)
 
 if (STATIC_SFML)
   set(SFML_STATIC_LIBRARIES TRUE)
 endif()
 
-find_package(SFML 2 REQUIRED system window graphics network audio main)
+if (CMAKE_HOST_WIN32)
+  find_package(SFML 2 REQUIRED system window graphics network audio main)
+  find_program(CPACK_IFW_BINARYCREATOR_EXECUTABLE name binarycreator.exe PATHS "C:/Qt/QtIFW2.0.1/bin")
+else()
+  find_package(SFML 2 REQUIRED system window graphics network audio)
+endif()
 
-option(MULTITHREAD_SUPPORT_ENABLED "Multithreaded Support Enabled" FALSE)
 
-find_program(CPACK_IFW_BINARYCREATOR_EXECUTABLE name binarycreator.exe PATHS "C:/Qt/QtIFW2.0.1/bin")
 
 if(CMAKE_COMPILER_IS_GNUCC)
   option(ENABLE_COVERAGE "Enable Coverage Reporting in GCC" FALSE)
