@@ -32,14 +32,14 @@ namespace spiced {
 
 
   Message_Box::Message_Box(sf::String t_string, sf::Font t_font, int t_font_size,
-    sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness)
+    sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_loc)
     : Game_Event(),
     m_string(std::move(t_string)), m_font(std::move(t_font)), m_font_color(std::move(t_font_color)),
     m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
     m_outline_thickness(t_outlineThickness),
-    m_text(t_string, m_font, t_font_size)
+    m_text(t_string, m_font, t_font_size),
+    m_location(std::move(t_loc))
   {
-    setPosition(10, 10);
     m_text.setColor(m_font_color);
   }
 
@@ -61,12 +61,12 @@ namespace spiced {
 
   void Message_Box::draw(sf::RenderTarget& target, sf::RenderStates states) const
   {
-    auto size = target.getView().getSize();
-    size.x -= 20;
-    size.y -= 20;
+    const auto size = m_location.get_size(target.getView().getSize());
 
+    auto transform = getTransform();
+    transform.translate(m_location.get_position(target.getView().getSize()));
     // apply the transform
-    states.transform *= getTransform();
+    states.transform *= transform;
 
     sf::RectangleShape rect(size);
     rect.setFillColor(m_fill_color);
@@ -81,29 +81,27 @@ namespace spiced {
 
   Selection_Menu::Selection_Menu(sf::Font t_font, int t_font_size,
     sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-    std::vector<Game_Action> t_actions, const size_t t_selection)
+    std::vector<Game_Action> t_actions, const size_t t_selection, Location t_location)
     : Game_Event(),
     m_font(std::move(t_font)), m_font_color(std::move(t_font_color)),
     m_selected_color(std::move(t_selected_font_color)),
     m_selected_cur_color(m_selected_color),
     m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
     m_outline_thickness(t_outlineThickness), m_actions(std::move(t_actions)),
-    m_current_item(t_selection)
+    m_current_item(t_selection),
+    m_location(std::move(t_location))
   {
-    setPosition(10, 10);
-
     auto pos = 0.0f;
-
     for (const auto &action : m_actions)
     {
       m_texts.push_back([t_font_size, t_font_color, &action, &pos, this]()
-      {
-        sf::Text txt(action.description, m_font, t_font_size);
-        txt.setColor(t_font_color);
-        txt.setPosition(15, pos);
-        pos += t_font_size*1.1f;
-        return txt;
-      }()
+          {
+            sf::Text txt(action.description, m_font, t_font_size);
+            txt.setColor(t_font_color);
+            txt.setPosition(15, pos);
+            pos += t_font_size*1.1f;
+            return txt;
+          }()
         );
     }
 
@@ -168,12 +166,12 @@ namespace spiced {
 
   void Selection_Menu::draw(sf::RenderTarget& target, sf::RenderStates states) const
   {
-    auto size = target.getView().getSize();
-    size.x -= 20;
-    size.y -= 20;
+    const auto size = m_location.get_size(target.getView().getSize());
+    auto transform = getTransform();
+    transform.translate(m_location.get_position(target.getView().getSize()));
 
     // apply the transform
-    states.transform *= getTransform();
+    states.transform *= transform;
 
     sf::RectangleShape rect(size);
     rect.setFillColor(m_fill_color);
@@ -181,6 +179,7 @@ namespace spiced {
     rect.setOutlineThickness(m_outline_thickness);
 
     target.draw(rect, states);
+
 
     auto item = 0u;
     for (auto txt : m_texts)
@@ -199,13 +198,9 @@ namespace spiced {
   }
 
 
-
-
-
-
   Object_Interaction_Menu::Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
     sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-    const std::vector<Object_Action> &t_actions)
+    const std::vector<Object_Action> &t_actions, Location t_location)
     : Selection_Menu(std::move(t_font), t_font_size, std::move(t_font_color), std::move(t_selected_font_color), std::move(t_fill_color), std::move(t_outline_color),
       t_outlineThickness,
       [](const std::vector<Object_Action> &t_act, Object &t_o) {
@@ -217,7 +212,7 @@ namespace spiced {
         }
 
         return res;
-      }(t_actions, t_obj), 0)
+      }(t_actions, t_obj), 0, std::move(t_location))
   {
   }
 

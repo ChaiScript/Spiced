@@ -41,7 +41,6 @@
                 {
                  "gid":7,
                  "height":16,
-                 "id":1,
                  "name":"ExitSquare",
                  "properties":
                     {
@@ -55,9 +54,8 @@
                  "y":96
                 }, 
                 {
-                 "gid":101,
-                 "height":26,
-                 "id":2,
+                 "gid":103,
+                 "height":24,
                  "name":"Deborah",
                  "properties":
                     {
@@ -66,9 +64,9 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":26,
-                 "x":77,
-                 "y":88
+                 "width":16,
+                 "x":96,
+                 "y":92
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -92,7 +90,6 @@
          "x":0,
          "y":0
         }],
- "nextobjectid":3,
  "orientation":"orthogonal",
  "properties":
     {
@@ -152,6 +149,21 @@
          "spacing":0,
          "tileheight":26,
          "tilewidth":26
+        }, 
+        {
+         "firstgid":102,
+         "image":"..\/TileSets\/Deborah.png",
+         "imageheight":96,
+         "imagewidth":48,
+         "margin":0,
+         "name":"Deborah",
+         "properties":
+            {
+
+            },
+         "spacing":0,
+         "tileheight":24,
+         "tilewidth":16
         }],
  "tilewidth":16,
  "version":1,

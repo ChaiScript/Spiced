@@ -96,7 +96,7 @@ namespace spiced {
 
   void Game::show_message_box(const sf::String &t_msg)
   {
-    m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3));
+    m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, Location::Bottom));
   }
 
   void Game::show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation)
@@ -107,10 +107,10 @@ namespace spiced {
       if (!q.is_available || q.is_available(t_game_time, t_simulation_time, *this, t_obj))
       {
         actions.emplace_back(q.question,
-          [q](const float, const float, Game &t_game, Object &obj)
+          [q, t_game_time, t_simulation_time, &t_obj, t_conversation](const float, const float, Game &t_game, Object &obj)
         {
           for (const auto &answer : q.answers) {
-            t_game.show_message_box(answer.speaker + " says:\n\n" + answer.answer);
+            t_game.show_message_box(answer.speaker + ":\n\n" + answer.answer);
           }
           if (q.action) {
             using namespace std::placeholders;
@@ -130,17 +130,17 @@ namespace spiced {
     }
 
 
-    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, actions));
+    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, actions, Location::Bottom));
   }
 
   void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj)
   {
-    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this)));
+    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this), Location::Right));
   }
 
   void Game::show_selection_menu(const float /*t_game_time*/, const float /*t_simulation_time*/, const std::vector<Game_Action> &t_selections, const size_t t_selection)
   {
-    m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_selections, t_selection));
+    m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_selections, t_selection, Location::Right));
   }
 
   bool Game::has_pending_events() const

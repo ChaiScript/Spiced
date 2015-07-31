@@ -32,11 +32,32 @@ namespace spiced
       std::function<bool(const float, const float, Game &, Object &)> t_is_available,
       std::function<void(const float, const float, Game &, Object &)> t_action)
       : question(std::move(t_question)),
-      answers(std::move(t_answers)),
-      is_available(std::move(t_is_available)),
-      action(std::move(t_action))
+        answers(std::move(t_answers)),
+        is_available(std::move(t_is_available)),
+        action(std::move(t_action))
     {
     }
+
+    Question(std::string t_question,
+      std::vector<Answer> t_answers,
+      std::function<bool(Game &)> t_is_available = [](Game &){return true;},
+      std::function<void(Game &)> t_action = {})
+      : question(std::move(t_question)),
+        answers(std::move(t_answers)),
+        is_available([t_is_available](const float, const float, Game &t_game, Object &){ return t_is_available(t_game); }),
+        action(
+            [t_action]() -> std::function<void(const float, const float, Game &, Object &)> {
+              if (t_action) {
+                return [t_action](const float, const float, Game &t_game, Object &){ t_action(t_game); };
+              } else {
+                return std::function<void(const float, const float, Game &, Object &)>();
+              }
+            }())
+    {
+    }
+
+
+
 
     std::string question;
     std::vector<Answer> answers;
@@ -85,11 +106,55 @@ namespace spiced
     std::function<void(const float, const float, Game &)> m_action;
   };
 
+
+  struct Location
+  {
+    enum Position {
+      Top,
+      Bottom,
+      Left,
+      Right,
+      Center
+    };
+
+    Location(Position t_p) 
+      : position(t_p) {
+    }
+
+    sf::Vector2f get_position(const sf::Vector2f &t_size) const {
+      switch (position) {
+        case Bottom:
+          return sf::Vector2f(margin, t_size.y / 2);
+        case Center:
+          return sf::Vector2f(margin, t_size.y / 4);
+        case Right:
+          return sf::Vector2f(t_size.x / 2, margin);
+        default:
+          return sf::Vector2f(margin, margin);
+      };
+    }
+
+    sf::Vector2f get_size(const sf::Vector2f &t_size) const {
+      switch (position) {
+        case Top:
+        case Bottom:
+        case Center:
+          return sf::Vector2f(t_size.x - (margin * 2), t_size.y / 2 - margin);
+        default:
+          return sf::Vector2f(t_size.x / 2 - margin, t_size.y - (margin * 2));
+      };
+    }
+
+    Position position;
+    int margin = 10;
+  };
+
+
   class Message_Box : public Game_Event
   {
   public:
     Message_Box(sf::String t_string, sf::Font t_font, int t_font_size,
-      sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness);
+      sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_location);
 
     virtual ~Message_Box() = default;
 
@@ -108,6 +173,7 @@ namespace spiced
     sf::Color m_outline_color;
     float m_outline_thickness;
     sf::Text m_text;
+    Location m_location;
 
     float m_start_time = 0;
     bool m_is_done = false;
@@ -119,7 +185,7 @@ namespace spiced
     Selection_Menu(sf::Font t_font, int t_font_size,
       sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
       std::vector<Game_Action> t_actions,
-      const size_t t_selection);
+      const size_t t_selection, Location t_location);
 
     virtual ~Selection_Menu() = default;
 
@@ -138,11 +204,12 @@ namespace spiced
     sf::Color m_fill_color;
     sf::Color m_outline_color;
     float m_outline_thickness;
-    std::vector<sf::Text> m_texts;
 
     std::vector<Game_Action> m_actions;
-
+    std::vector<sf::Text> m_texts;
     size_t m_current_item = 0;
+    Location m_location;
+
     int m_last_direction = 0;
     float m_start_time = 0;
     bool m_is_done = false;
@@ -155,7 +222,7 @@ namespace spiced
   public:
     Object_Interaction_Menu(Object &t_obj, sf::Font t_font, int t_font_size,
       sf::Color t_font_color, sf::Color t_selected_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness,
-      const std::vector<Object_Action> &t_actions);
+      const std::vector<Object_Action> &t_actions, Location t_location);
   };
 
 }

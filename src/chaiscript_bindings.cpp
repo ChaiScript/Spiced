@@ -62,10 +62,20 @@ namespace spiced {
     module->add(chaiscript::constructor<Answer(std::string, std::string)>(), "Answer");
 
     module->add(chaiscript::user_type<Question>(), "Question");
+
     module->add(chaiscript::constructor<
       Question(std::string, std::vector<Answer>,
         std::function<bool(const float, const float, Game &, Object &)>,
         std::function<void(const float, const float, Game &, Object &)>)>(), "Question");
+    module->add(chaiscript::constructor<
+      Question(std::string, std::vector<Answer>,
+        std::function<bool(Game &)>,
+        std::function<void(Game &)>)>(), "Question");
+    module->add(chaiscript::constructor<
+      Question(std::string, std::vector<Answer>,
+        std::function<bool(Game &)>)>(), "Question");
+    module->add(chaiscript::constructor<
+      Question(std::string, std::vector<Answer>)>(), "Question");
 
     module->add(chaiscript::user_type<Conversation>(), "Conversation");
     module->add(chaiscript::constructor<Conversation(std::vector<Question>)>(), "Conversation");
