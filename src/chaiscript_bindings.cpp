@@ -30,13 +30,18 @@ namespace spiced {
     ADD_FUN(Game, add_start_action);
     ADD_FUN(Game, add_queued_action);
     ADD_FUN(Game, show_message_box);
+    module->add(
+      chaiscript::fun([](Game &t_game, const std::string &t_msg)
+          {
+            t_game.show_message_box(t_msg);
+          }), "show_message_box");
     ADD_FUN(Game, show_object_interaction_menu);
     ADD_FUN(Game, show_selection_menu);
     module->add(
       chaiscript::fun([](Game &t_game, const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections)
-    {
-      t_game.show_selection_menu(t_game_time, t_simulation_time, t_selections);
-    }), "show_selection_menu");
+          {
+            t_game.show_selection_menu(t_game_time, t_simulation_time, t_selections);
+          }), "show_selection_menu");
     ADD_FUN(Game, show_conversation);
     ADD_FUN(Game, has_pending_events);
     ADD_FUN(Game, get_current_event);
@@ -123,6 +128,7 @@ namespace spiced {
     ADD_FUN(Tile_Map, update);
     ADD_FUN(Tile_Map, set_collision_action);
     ADD_FUN(Tile_Map, set_action_generator);
+    ADD_FUN(Tile_Map, set_portrait);
 
     module->add(chaiscript::type_conversion<std::string, sf::String>());
 

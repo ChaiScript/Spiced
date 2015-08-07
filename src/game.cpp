@@ -94,9 +94,9 @@ namespace spiced {
     m_game_events.emplace_back(new Queued_Action(t_action));
   }
 
-  void Game::show_message_box(const sf::String &t_msg)
+  void Game::show_message_box(const sf::String &t_msg, const sf::Texture *t_texture)
   {
-    m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, Location::Bottom));
+    m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, Location::Bottom, t_texture));
   }
 
   void Game::show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation)
@@ -110,7 +110,12 @@ namespace spiced {
           [q, t_game_time, t_simulation_time, &t_obj, t_conversation](const float, const float, Game &t_game, Object &obj)
         {
           for (const auto &answer : q.answers) {
-            t_game.show_message_box(answer.speaker + ":\n\n" + answer.answer);
+            const std::string portrait = obj.get_portrait();
+            const sf::Texture *texture = nullptr;
+            if (!portrait.empty()) {
+              texture = &t_game.get_texture(portrait);
+            }
+            t_game.show_message_box(answer.speaker + ":\n\n" + answer.answer, texture);
           }
           if (q.action) {
             using namespace std::placeholders;

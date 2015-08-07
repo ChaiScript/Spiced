@@ -89,8 +89,12 @@ namespace spiced
 
     std::string name() const;
 
+    void set_portrait(const std::string &t_portrait);
+    std::string get_portrait() const;
+
   private:
     std::string m_name;
+    std::string m_portrait;
     Tileset m_tileset;
     int m_tile_id;
     bool m_visible;
@@ -197,6 +201,8 @@ namespace spiced
 
     void set_action_generator(const std::string &t_obj_name,
       std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator);
+
+    void set_portrait(const std::string &t_obj_name, const std::string &t_portrait_path);
 
 
     static sf::FloatRect get_bounding_box(const sf::Sprite &t_s, const sf::Vector2f &t_distance);

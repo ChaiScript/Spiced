@@ -32,14 +32,18 @@ namespace spiced {
 
 
   Message_Box::Message_Box(sf::String t_string, sf::Font t_font, int t_font_size,
-    sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_loc)
+    sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_loc,
+    const sf::Texture *t_texture)
     : Game_Event(),
-    m_string(std::move(t_string)), m_font(std::move(t_font)), m_font_color(std::move(t_font_color)),
-    m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
-    m_outline_thickness(t_outlineThickness),
-    m_text(t_string, m_font, t_font_size),
-    m_location(std::move(t_loc))
+      m_string(std::move(t_string)), m_font(std::move(t_font)), m_font_color(std::move(t_font_color)),
+      m_fill_color(std::move(t_fill_color)), m_outline_color(std::move(t_outline_color)),
+      m_outline_thickness(t_outlineThickness),
+      m_text(t_string, m_font, t_font_size),
+      m_location(std::move(t_loc)),
+      m_portrait(t_texture?new sf::Sprite(*t_texture):nullptr)
   {
+    /// \todo un-hardcode this
+    if (m_portrait) m_portrait->setScale(2,2);
     m_text.setColor(m_font_color);
   }
 
@@ -75,6 +79,9 @@ namespace spiced {
 
     target.draw(rect, states);
     target.draw(m_text, states);
+    if (m_portrait) {
+      target.draw(*m_portrait);
+    }
   }
 
 

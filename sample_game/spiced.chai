@@ -384,6 +384,7 @@ var game_creator = fun(game) {
 
   fairview.set_collision_action("Deborah", collision_action);
   fairview.set_action_generator("Deborah", Deborah_actions);
+  fairview.set_portrait("Deborah", "resources/Deborah-portrait.png");
 
   game.add_map("fairview", fairview);
 

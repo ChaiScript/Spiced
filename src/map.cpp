@@ -19,16 +19,25 @@ namespace spiced {
     std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
     std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator)
     : m_name(std::move(t_name)),
-    m_tileset(std::move(t_tileset)),
-    m_tile_id(t_tile_id),
-    m_visible(t_visible),
-    m_collision_action(std::move(t_collision_action)),
-    m_action_generator(std::move(t_action_generator))
+      m_tileset(std::move(t_tileset)),
+      m_tile_id(t_tile_id),
+      m_visible(t_visible),
+      m_collision_action(std::move(t_collision_action)),
+      m_action_generator(std::move(t_action_generator))
   {
     setTexture(m_tileset.texture.get());
     setTextureRect(m_tileset.get_rect(m_tile_id, 0));
   }
 
+  void Object::set_portrait(const std::string &t_portrait)
+  {
+    m_portrait = t_portrait;
+  }
+
+  std::string Object::get_portrait() const
+  {
+    return m_portrait;
+  }
 
   void Object::update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game)
   {
@@ -516,10 +525,17 @@ namespace spiced {
   void Tile_Map::set_collision_action(const std::string &t_obj_name,
     std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action)
   {
-
     const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
     if (obj == m_objects.end()) throw std::logic_error("Attempt to set collision action on non-existent object: " + t_obj_name);
     obj->set_collision_action(t_collision_action);
+  }
+
+
+  void Tile_Map::set_portrait(const std::string &t_obj_name, const std::string &t_portrait_path)
+  {
+    const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
+    if (obj == m_objects.end()) throw std::logic_error("Attempt to set portrait path on non-existent object: " + t_obj_name);
+    obj->set_portrait(t_portrait_path);
   }
 
   void Tile_Map::set_action_generator(const std::string &t_obj_name,

@@ -37,7 +37,7 @@ namespace spiced {
 
     void add_queued_action(const std::function<void(const float t_game_time, const float t_simulation_time, Game &)> &t_action);
 
-    void show_message_box(const sf::String &t_msg);
+    void show_message_box(const sf::String &t_msg, const sf::Texture *t_texture = nullptr);
 
     void show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections, const size_t t_selection = 0);
     void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj);

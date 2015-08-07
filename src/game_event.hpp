@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <functional>
+#include <memory>
 
 namespace spiced
 {
@@ -154,7 +155,7 @@ namespace spiced
   {
   public:
     Message_Box(sf::String t_string, sf::Font t_font, int t_font_size,
-      sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_location);
+      sf::Color t_font_color, sf::Color t_fill_color, sf::Color t_outline_color, float t_outlineThickness, Location t_location, const sf::Texture *t_texture);
 
     virtual ~Message_Box() = default;
 
@@ -174,6 +175,7 @@ namespace spiced
     float m_outline_thickness;
     sf::Text m_text;
     Location m_location;
+    std::unique_ptr<sf::Sprite> m_portrait;
 
     float m_start_time = 0;
     bool m_is_done = false;
