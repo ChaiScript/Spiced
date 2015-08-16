@@ -16,8 +16,8 @@ namespace spiced {
   Object::Object(std::string t_name, Tileset t_tileset,
     const int t_tile_id,
     const bool t_visible,
-    std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
-    std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator)
+    std::function<void(const Game_State &, Object &, sf::Sprite &)> t_collision_action,
+    std::function<std::vector<Object_Action>(const Game_State &, Object &)> t_action_generator)
     : m_name(std::move(t_name)),
       m_tileset(std::move(t_tileset)),
       m_tile_id(t_tile_id),
@@ -39,12 +39,12 @@ namespace spiced {
     return m_portrait;
   }
 
-  void Object::update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game)
+  void Object::update(const Game_State &t_game)
   {
-    setTextureRect(m_tileset.get_rect(m_tile_id, t_game_time));
+    setTextureRect(m_tileset.get_rect(m_tile_id, t_game.state().game_time));
 
     if (!m_visible) {
-      if (t_game.show_invisible()) {
+      if (t_game.game().show_invisible()) {
         setColor(sf::Color(255, 255, 255, 128));
       }
       else {
@@ -53,27 +53,27 @@ namespace spiced {
     }
   }
 
-  std::vector<Object_Action> Object::get_actions(const float t_game_time, const float t_simulation_time, Game &t_game)
+  std::vector<Object_Action> Object::get_actions(const Game_State &t_game)
   {
-    return m_action_generator(t_game_time, t_simulation_time, t_game, *this);
+    return m_action_generator(t_game, *this);
   }
 
-  void Object::set_collision_action(std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action)
+  void Object::set_collision_action(std::function<void(const Game_State &, Object &, sf::Sprite &)> t_collision_action)
   {
     m_collision_action = std::move(t_collision_action);
   }
 
-  void Object::set_action_generator(std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator)
+  void Object::set_action_generator(std::function<std::vector<Object_Action>(const Game_State &, Object &)> t_action_generator)
   {
     m_action_generator = std::move(t_action_generator);
   }
 
 
-  void Object::do_collision(const float t_game_time, const float t_simulation_time, Game &t_game, sf::Sprite &t_collided_with)
+  void Object::do_collision(const Game_State &t_game, sf::Sprite &t_collided_with)
   {
     if (m_collision_action)
     {
-      m_collision_action(t_game_time, t_simulation_time, t_game, *this, t_collided_with);
+      m_collision_action(t_game, *this, t_collided_with);
     }
   }
 
@@ -87,17 +87,18 @@ namespace spiced {
     return m_name;
   }
 
-  Tile_Properties::Tile_Properties(bool t_passable,
-    std::function<void(float, float)> t_movement_action)
-    : passable(t_passable), movement_action(std::move(t_movement_action))
+  Tile_Properties::Tile_Properties(bool t_passable, bool t_visible,
+      std::function<void(const Game_State &, const float)> t_movement_action,
+      std::function<void(const Game_State &, sf::Sprite &)> t_collision_action)
+    : passable(t_passable), visible(t_visible), movement_action(std::move(t_movement_action)), collision_action(std::move(t_collision_action))
   {
   }
 
-  void Tile_Properties::do_movement_action(const float t_game_time, const float t_simulation_time)
+  void Tile_Properties::do_movement_action(const Game_State &t_game, const float t_distance)
   {
     if (movement_action)
     {
-      movement_action(t_game_time, t_simulation_time);
+      movement_action(t_game, t_distance);
     }
   }
 
@@ -269,7 +270,7 @@ namespace spiced {
   }
 
 
-  Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults)
+  Tile_Map::Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults, const Script_Parser &t_script_parser)
     : m_map_defaults(to_map(std::move(t_map_defaults)))
   {
     std::ifstream ifs(t_file_path);
@@ -281,8 +282,17 @@ namespace spiced {
     const auto map_width = json.at("width").ToInt();
     const auto map_height = json.at("height").ToInt();
 
-    const auto parent_path = t_file_path.substr(0, t_file_path.rfind('/'));
+    const auto parent_path = [&]() {
+      const auto slash = t_file_path.rfind('/');
 
+      if (slash == std::string::npos) {
+        return std::string();
+      } else {
+        return t_file_path.substr(0, slash + 1);
+      }
+    }();
+
+    std::cout << "Path: " << t_file_path << " parent path: " << parent_path << '\n';
     std::map<int, std::map<std::string, std::string>> tile_properties;
 
     for (const auto &tileset : json.at("tilesets").ArrayRange())
@@ -300,9 +310,12 @@ namespace spiced {
             const std::string value = property.second.ToString();
             if (prop_name == "passable" && value == "false") {
               m_map_defaults[id].passable = false;
-            }
-            else {
-              std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+            } if (prop_name == "visible" && value == "false") {
+              m_map_defaults[id].visible = false;
+            } if (prop_name == "collision_action") {
+              m_map_defaults[id].collision_action = t_script_parser.collision_action_parser(value);
+            } else {
+              std::cerr << "Unhandled tile property: " << prop_name << ": " << value << '\n';
             }
             //props.emplace(property.first, property.second.ToString());
           }
@@ -328,7 +341,7 @@ namespace spiced {
         }
       }
 
-      m_tilesets.emplace_back(t_game.get_texture(parent_path + '/' + tileset.at("image").ToString()),
+      m_tilesets.emplace_back(t_game.get_texture(parent_path + tileset.at("image").ToString()),
         first_gid,
         tileset.at("tilewidth").ToInt(), tileset.at("tileheight").ToInt(),
         std::move(animations));
@@ -351,7 +364,7 @@ namespace spiced {
               visible = false;
             }
             else {
-              std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+              std::cerr << "Unhandled layer property: " << prop_name << ": " << value << '\n';
             }
             //props.emplace(property.first, property.second.ToString());
           }
@@ -383,7 +396,7 @@ namespace spiced {
               visible = false;
             }
             else {
-              std::cerr << "Unhandled property: " << prop_name << ": " << value << '\n';
+              std::cerr << "Unhandled object property: " << prop_name << ": " << value << '\n';
             }
             //props.emplace(property.first, property.second.ToString());
           }
@@ -523,7 +536,7 @@ namespace spiced {
   }
 
   void Tile_Map::set_collision_action(const std::string &t_obj_name,
-    std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action)
+    std::function<void(const Game_State &, Object &, sf::Sprite &)> t_collision_action)
   {
     const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
     if (obj == m_objects.end()) throw std::logic_error("Attempt to set collision action on non-existent object: " + t_obj_name);
@@ -539,7 +552,7 @@ namespace spiced {
   }
 
   void Tile_Map::set_action_generator(const std::string &t_obj_name,
-    std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator)
+    std::function<std::vector<Object_Action>(const Game_State &, Object &)> t_action_generator)
   {
     const auto obj = std::find_if(m_objects.begin(), m_objects.end(), [&](const Object &t_obj) { return t_obj.name() == t_obj_name; });
     if (obj == m_objects.end()) throw std::logic_error("Attempt to set collision action on non-existent object: " + t_obj_name);
@@ -581,8 +594,9 @@ namespace spiced {
     return sf::Vector2f(0, 0);
   }
 
-  void Tile_Map::do_move(const float t_time, sf::Sprite &t_s, const sf::Vector2f &distance)
+  void Tile_Map::do_move(const Game_State &t_game, sf::Sprite &t_s, const sf::Vector2f &distance)
   {
+    const auto time = t_game.state().simulation_time;
     auto bounds = t_s.getGlobalBounds();
 
     auto center = sf::Vector2f(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
@@ -608,10 +622,10 @@ namespace spiced {
 
     std::sort(segments.begin(), segments.end(),
       [](const std::tuple<std::reference_wrapper<Tile_Data>, Line_Segment, float> &t_lhs,
-        const std::tuple<std::reference_wrapper<Tile_Data>, Line_Segment, float> &t_rhs)
-    {
-      return std::get<2>(t_lhs) < std::get<2>(t_rhs);
-    }
+         const std::tuple<std::reference_wrapper<Tile_Data>, Line_Segment, float> &t_rhs)
+      {
+        return std::get<2>(t_lhs) < std::get<2>(t_rhs);
+      }
     );
 
     auto total_length = segment.length();
@@ -625,18 +639,18 @@ namespace spiced {
       auto percent = total_length == 0 ? 1 : (length / total_length);
       total += percent;
 
-      std::get<0>(cur_segment).get().properties.do_movement_action(t_time * percent, length);
+      std::get<0>(cur_segment).get().properties.do_movement_action(Game_State(Simulation_State(t_game.state().game_time, time * percent), t_game.game()), length);
     }
 
     //assert(total >= 0.999);
     //assert(total <= 1.001);
   }
 
-  void Tile_Map::update(const float t_game_time, const float t_simulation_time, Game &t_game)
+  void Tile_Map::update(const Game_State &t_game)
   {
     for (auto &obj : m_objects)
     {
-      obj.update(t_game_time, t_simulation_time, t_game);
+      obj.update(t_game);
     }
   }
 

@@ -15,6 +15,45 @@ namespace spiced {
   struct Game_Action;
   struct Conversation;
 
+
+
+
+  struct Simulation_State
+  {
+    Simulation_State(const float t_game_time, const float t_simulation_time)
+      : game_time(t_game_time), simulation_time(t_simulation_time)
+    {
+    }
+
+    float game_time;
+    float simulation_time;
+  };
+
+  class Game;
+
+  class Game_State
+  {
+    public:
+      Game_State(Simulation_State t_state, Game &t_game)
+        : m_state(std::move(t_state)), m_game(t_game)
+      {
+      }
+
+      const Simulation_State &state() const {
+        return m_state;
+      }
+
+      Game &game() const {
+        return m_game.get();
+      }
+
+    private:
+      Simulation_State m_state;
+      std::reference_wrapper<Game> m_game;
+
+  };
+
+
   class Game : public sf::Drawable
   {
   public:
@@ -35,19 +74,19 @@ namespace spiced {
 
     void add_start_action(const std::function<void(Game &)> &t_action);
 
-    void add_queued_action(const std::function<void(const float t_game_time, const float t_simulation_time, Game &)> &t_action);
+    void add_queued_action(const std::function<void(const Game_State &)> &t_action);
 
     void show_message_box(const sf::String &t_msg, const sf::Texture *t_texture = nullptr);
 
-    void show_selection_menu(const float t_game_time, const float t_simulation_time, const std::vector<Game_Action> &t_selections, const size_t t_selection = 0);
-    void show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj);
-    void show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation);
+    void show_selection_menu(const Simulation_State &t_state, const std::vector<Game_Action> &t_selections, const size_t t_selection = 0);
+    void show_object_interaction_menu(const Simulation_State &t_state, Object &t_obj);
+    void show_conversation(const Simulation_State &t_state, Object &t_obj, const Conversation &t_conversation);
 
     bool has_pending_events() const;
 
     Game_Event &get_current_event() const;
 
-    void update(const float t_game_time, const float t_simulation_time);
+    void update(const Simulation_State &t_state);
 
     static sf::Vector2f get_input_direction_vector();
 
@@ -96,6 +135,7 @@ namespace spiced {
     float m_rotate;
     float m_zoom;
   };
+
 
 }
 

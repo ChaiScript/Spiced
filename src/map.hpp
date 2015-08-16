@@ -8,6 +8,7 @@ namespace spiced
 {
   class Game;
   class Object;
+  class Game_State;
 
   struct Frame
   {
@@ -44,25 +45,25 @@ namespace spiced
 
   struct Game_Action
   {
-    Game_Action(std::string t_description, std::function<void(const float, const float, Game &)> t_action)
+    Game_Action(std::string t_description, std::function<void(const Game_State &)> t_action)
       : description(std::move(t_description)), action(std::move(t_action))
     {
     }
 
     std::string description;
-    std::function<void(const float, const float, Game &)> action;
+    std::function<void(Game_State)> action;
   };
 
 
   struct Object_Action
   {
-    Object_Action(std::string t_description, std::function<void(const float, const float, Game &, Object &)> t_action)
+    Object_Action(std::string t_description, std::function<void(const Game_State &, Object &)> t_action)
       : description(std::move(t_description)), action(std::move(t_action))
     {
     }
 
     std::string description;
-    std::function<void(const float, const float, Game &, Object &)> action;
+    std::function<void(const Game_State &, Object &)> action;
   };
 
   class Object : public sf::Sprite
@@ -71,21 +72,21 @@ namespace spiced
     Object(std::string t_name, Tileset t_tileset,
       const int t_tile_id,
       const bool t_visible,
-      std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action,
-      std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator);
+      std::function<void(const Game_State &, Object &, sf::Sprite &)> t_collision_action,
+      std::function<std::vector<Object_Action>(const Game_State &, Object &)> t_action_generator);
 
     virtual ~Object() = default;
 
-    void update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game);
+    void update(const Game_State &t_state);
 
     void set_position(const float x, const float y);
 
-    std::vector<Object_Action> get_actions(const float t_game_time, const float t_simulation_time, Game &t_game);
+    std::vector<Object_Action> get_actions(const Game_State &t_state);
 
-    void do_collision(const float t_game_time, const float t_simulation_time, Game &t_game, sf::Sprite &t_collided_with);
+    void do_collision(const Game_State &t_state, sf::Sprite &t_collided_with);
 
-    void set_collision_action(std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action);
-    void set_action_generator(std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator);
+    void set_collision_action(std::function<void(const Game_State &t_state, Object &, sf::Sprite &)> t_collision_action);
+    void set_action_generator(std::function<std::vector<Object_Action>(const Game_State &t_state, Object &)> t_action_generator);
 
     std::string name() const;
 
@@ -98,20 +99,23 @@ namespace spiced
     Tileset m_tileset;
     int m_tile_id;
     bool m_visible;
-    std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> m_collision_action;
-    std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> m_action_generator;
+    std::function<void(const Game_State &, Object &, sf::Sprite &)> m_collision_action;
+    std::function<std::vector<Object_Action>(const Game_State &, Object &)> m_action_generator;
   };
 
 
   struct Tile_Properties
   {
-    Tile_Properties(bool t_passable = true,
-      std::function<void(float, float)> t_movement_action = std::function<void(float, float)>());
+    Tile_Properties(bool t_passable = true, bool t_visible = true,
+      std::function<void(const Game_State &, const float)> t_movement_action = std::function<void(const Game_State &, const float)>(),
+      std::function<void(const Game_State &, sf::Sprite &)> t_collision_action = std::function<void (const Game_State &, sf::Sprite &)>());
 
-    void do_movement_action(const float t_game_time, const float t_simulation_time);
+    void do_movement_action(const Game_State &t_state, const float t_distance);
 
     bool passable;
-    std::function<void(float, float)> movement_action;
+    bool visible;
+    std::function<void(const Game_State &, const float)> movement_action;
+    std::function<void(const Game_State &, sf::Sprite &)> collision_action;
   };
 
   struct Tile_Defaults
@@ -167,22 +171,27 @@ namespace spiced
     sf::FloatRect bounds;
   };
 
-  struct Layer
+  struct Script_Parser
   {
-    Layer(std::vector<int> t_data, const bool t_visible)
-      : data(std::move(t_data)), visible(t_visible)
-    {
-    }
-
-    std::vector<int> data;
-    bool visible;
+    std::function<std::function<void (const Game_State &, sf::Sprite &)> (const std::string &)> collision_action_parser;
   };
 
   class Tile_Map : public sf::Drawable, public sf::Transformable
   {
   public:
+    struct Layer
+    {
+      Layer(std::vector<int> t_data, const bool t_visible)
+        : data(std::move(t_data)), visible(t_visible)
+      {
+      }
 
-    Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults);
+      std::vector<int> data;
+      bool visible;
+    };
+
+    Tile_Map(Game &t_game, const std::string &t_file_path, std::vector<Tile_Defaults> t_map_defaults,
+        const Script_Parser &t_parser);
 
     virtual ~Tile_Map() = default;
 
@@ -197,10 +206,10 @@ namespace spiced
     void add_object(const Object &t_o);
 
     void set_collision_action(const std::string &t_obj_name,
-      std::function<void(const float, const float, Game &, Object &, sf::Sprite &)> t_collision_action);
+      std::function<void(const Game_State &, Object &, sf::Sprite &)> t_collision_action);
 
     void set_action_generator(const std::string &t_obj_name,
-      std::function<std::vector<Object_Action>(const float, const float, Game &, Object &)> t_action_generator);
+      std::function<std::vector<Object_Action>(const Game_State &, Object &)> t_action_generator);
 
     void set_portrait(const std::string &t_obj_name, const std::string &t_portrait_path);
 
@@ -213,9 +222,9 @@ namespace spiced
 
     sf::Vector2f adjust_move(const sf::Sprite &t_s, const sf::Vector2f &distance) const;
 
-    void do_move(const float t_time, sf::Sprite &t_s, const sf::Vector2f &distance);
+    void do_move(const Game_State &t_game, sf::Sprite &t_s, const sf::Vector2f &distance);
 
-    void update(const float t_game_time, const float t_simulation_time, Game &t_game);
+    void update(const Game_State &t_state);
 
     sf::Vector2u tile_size() const;
 

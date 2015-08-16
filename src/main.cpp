@@ -80,7 +80,7 @@ int main()
         }
       }
 
-      game.update(game_time, time_elapsed);
+      game.update(spiced::Simulation_State(game_time, time_elapsed));
 
       const auto window_size = window.getSize();
       sf::View mainView(game.get_avatar_position(), sf::Vector2f(window_size));

@@ -14,13 +14,13 @@
 #include <cmath>
 
 namespace spiced {
-  Queued_Action::Queued_Action(std::function<void(const float, const float, Game &)> t_action)
+  Queued_Action::Queued_Action(std::function<void(const Game_State &)> t_action)
     : m_action(std::move(t_action))
   { }
 
-  void Queued_Action::update(const float t_game_time, const float t_simulation_time, Game &t_game)
+  void Queued_Action::update(const Game_State &t_game)
   {
-    m_action(t_game_time, t_simulation_time, t_game);
+    m_action(t_game);
     m_done = true;
   }
 
@@ -48,11 +48,11 @@ namespace spiced {
   }
 
 
-  void Message_Box::update(const float t_game_time, const float /*t_simulation_time*/, Game &/*t_game*/)
+  void Message_Box::update(const Game_State &t_game)
   {
-    if (m_start_time == 0) m_start_time = t_game_time;
+    if (m_start_time == 0) m_start_time = t_game.state().game_time;
 
-    if (t_game_time - m_start_time >= .5 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+    if (t_game.state().game_time - m_start_time >= .5 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
     {
       m_is_done = true;
     }
@@ -114,17 +114,17 @@ namespace spiced {
 
   }
 
-  void Selection_Menu::update(const float t_game_time, const float t_simulation_time, Game &t_game)
+  void Selection_Menu::update(const Game_State &t_game)
   {
-    if (m_start_time == 0) m_start_time = t_game_time;
+    if (m_start_time == 0) m_start_time = t_game.state().game_time;
 
-    if (t_game_time - m_start_time >= .5 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
+    if (t_game.state().game_time - m_start_time >= .5 && sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
     {
-      m_actions[m_current_item].action(t_game_time, t_simulation_time, t_game);
+      m_actions[m_current_item].action(t_game);
       m_is_done = true;
     }
 
-    if (std::remainder(t_game_time, .5f) > 0)
+    if (std::remainder(t_game.state().game_time, .5f) > 0)
     {
       m_selected_cur_color = m_selected_color;
     }
@@ -215,7 +215,7 @@ namespace spiced {
         for (auto &act : t_act) {
           auto func = act.action;
           using namespace std::placeholders;
-          res.emplace_back(act.description, std::bind(act.action, _1, _2, _3, std::ref(t_o)));
+          res.emplace_back(act.description, std::bind(act.action, _1, std::ref(t_o)));
         }
 
         return res;

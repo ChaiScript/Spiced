@@ -22,44 +22,48 @@ def refusing_business(t_game) {
   return t_game.get_flag("deborah_shared_verse") && t_game.get_flag("have_spread_rumors") && !t_game.get_flag("have_said_something_nice") && !t_game.get_flag("did_not_respond");
 }
 
-def did_make_all_responses(t_game) {
+def did_make_all_responses(Game t_game) {
   return t_game.get_flag("have_talked_to_Diane") && t_game.get_flag("have_talked_to_Joshua");
 }
 
-def have_said_something_nice(t_game) {
-  return t_game.get_flag("have_said_something_nice")
+def did_make_all_responses(Game_State t_game_state) {
+  return did_make_all_responses(t_game_state.game());
 }
 
-def travel_to(t_loc, t_game) {
-  var has_offroad_tires = t_game.get_flag("has_offroad_tires");
-  var has_tire_chains = t_game.get_flag("has_tire_chains");
+def have_said_something_nice(t_game) {
+  return t_game.game().get_flag("have_said_something_nice")
+}
+
+def travel_to(t_loc, t_game_state) {
+  var has_offroad_tires = t_game_state.game().get_flag("has_offroad_tires");
+  var has_tire_chains = t_game_state.game().get_flag("has_tire_chains");
   var no_chains = !has_tire_chains && t_loc.requires_chains;
   var no_offroad_tires = !has_offroad_tires && t_loc.requires_offroad_tires;
 
   if (no_chains && no_offroad_tires) {
-    t_game.show_message_box("This route requires tire chains and off-road tires.");
+    t_game_state.game().show_message_box("This route requires tire chains and off-road tires.");
   } else if (no_chains) {
-    t_game.show_message_box("This route requires tire chains.");
+    t_game_state.game().show_message_box("This route requires tire chains.");
   } else if (no_offroad_tires) {
-    t_game.show_message_box("This route requires off-road tires.");
+    t_game_state.game().show_message_box("This route requires off-road tires.");
   } else {
-    if (do_purchase(t_game, t_loc.cost)) {
-      t_game.teleport_to_tile(t_loc.x, t_loc.y);
+    if (do_purchase(t_game_state.game(), t_loc.cost)) {
+      t_game_state.game().teleport_to_tile(t_loc.x, t_loc.y);
     }
   }
 }
 
-def sell(string t_thing, int t_price, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, t_next)
+def sell(string t_thing, int t_price, t_game_state, t_bread, t_meat, t_vegetables, t_wood, t_next)
 {
-  var count = t_game.get_value(t_thing);
+  var count = t_game_state.game().get_value(t_thing);
   if (count > 0) {
-    t_game.set_value(t_thing, count - 1);
-    t_game.set_value("money", t_game.get_value("money") + t_price);
+    t_game_state.game().set_value(t_thing, count - 1);
+    t_game_state.game().set_value("money", t_game_state.game().get_value("money") + t_price);
   } else {
-    t_game.show_message_box("You don't have any ${t_thing} to sell.");
+    t_game_state.game().show_message_box("You don't have any ${t_thing} to sell.");
   }
 
-  show_shop_menu(t_game, false, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, t_next);
+  show_shop_menu(t_game_state, false, t_bread, t_meat, t_vegetables, t_wood, t_next);
 }
 
 def do_purchase(t_game, int t_price)
@@ -75,109 +79,109 @@ def do_purchase(t_game, int t_price)
   }
 }
 
-def buy(string t_thing, int t_price, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, t_next)
+def buy(string t_thing, int t_price, t_game_state, t_bread, t_meat, t_vegetables, t_wood, t_next)
 {
-  var total_items = t_game.get_value("meat") + t_game.get_value("wood") + t_game.get_value("vegetables") + t_game.get_value("bread");
+  var total_items = t_game_state.game().get_value("meat") + t_game_state.game().get_value("wood") + t_game_state.game().get_value("vegetables") + t_game_state.game().get_value("bread");
 
   if (total_items == 5) {
-    t_game.show_message_box("Your truck is full.");
+    t_game_state.game().show_message_box("Your truck is full.");
   } else {
-    var money = t_game.get_value("money");
+    var money = t_game_state.game().get_value("money");
 
-    if (do_purchase(t_game, t_price)) {
-      var count = t_game.get_value(t_thing);
-      t_game.set_value(t_thing, count + 1);
+    if (do_purchase(t_game_state.game(), t_price)) {
+      var count = t_game_state.game().get_value(t_thing);
+      t_game_state.game().set_value(t_thing, count + 1);
     }
   }
 
-  show_shop_menu(t_game, false, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, t_next);
+  show_shop_menu(t_game_state, false, t_bread, t_meat, t_vegetables, t_wood, t_next);
 }
 
-def show_shop_menu(t_game, t_sensitive, t_game_time, t_simulation_time, int t_bread, int t_meat, int t_vegetables, int t_wood)
+def show_shop_menu(t_game_state, t_sensitive, int t_bread, int t_meat, int t_vegetables, int t_wood)
 {
-  show_shop_menu(t_game, t_sensitive, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 0);
+  show_shop_menu(t_game_state, t_sensitive, t_bread, t_meat, t_vegetables, t_wood, 0);
 }
 
-def show_shop_menu(t_game, t_sensitive, t_game_time, t_simulation_time, int t_bread, int t_meat, int t_vegetables, int t_wood, int t_next)
+def show_shop_menu(t_game_state, t_sensitive, int t_bread, int t_meat, int t_vegetables, int t_wood, int t_next)
 {
-  var bread = t_game.get_value("bread");
-  var meat = t_game.get_value("meat");
-  var vegetables = t_game.get_value("vegetables");
-  var wood = t_game.get_value("wood");
-  var money = t_game.get_value("money");
+  var bread = t_game_state.game().get_value("bread");
+  var meat = t_game_state.game().get_value("meat");
+  var vegetables = t_game_state.game().get_value("vegetables");
+  var wood = t_game_state.game().get_value("wood");
+  var money = t_game_state.game().get_value("money");
 
 
-  if (t_sensitive && refusing_business(t_game)) {
-    t_game.show_message_box("This location is refusing to do business with you because of your rumor spreading");
+  if (t_sensitive && refusing_business(t_game_state.game())) {
+    t_game_state.game().show_message_box("This location is refusing to do business with you because of your rumor spreading");
     return;
   }
 
   var actions =
     [
       Game_Action("Sell Bread $${t_bread} (have: ${bread})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          sell("bread", t_bread, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 0);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          sell("bread", t_bread, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 0);
         }),
       Game_Action("Sell Meat $${t_meat} (have: ${meat})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          sell("meat", t_meat, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 1);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          sell("meat", t_meat, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 1);
         }),
       Game_Action("Sell Vegetables $${t_vegetables} (have: ${vegetables})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          sell("vegetables", t_vegetables, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 2);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          sell("vegetables", t_vegetables, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 2);
         }),
       Game_Action("Sell Wood $${t_wood} (have: ${wood})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          sell("wood", t_wood, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 3);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          sell("wood", t_wood, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 3);
         }),
       Game_Action("Buy Bread $${t_bread} (have: ${bread})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          buy("bread", t_bread, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 4);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          buy("bread", t_bread, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 4);
         }),
       Game_Action("Buy Meat $${t_meat} (have: ${meat})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          buy("meat", t_meat, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 5);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          buy("meat", t_meat, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 5);
         }),
       Game_Action("Buy Vegetables $${t_vegetables} (have: ${vegetables})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          buy("vegetables", t_vegetables, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 6);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          buy("vegetables", t_vegetables, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 6);
         }),
       Game_Action("Buy Wood $${t_wood} (have: ${wood})", 
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          buy("wood", t_wood, t_game, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 7);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          buy("wood", t_wood, t_game_state, t_bread, t_meat, t_vegetables, t_wood, 7);
         }),
       Game_Action("Buy tire chains ($150)",
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          if (!t_game.get_flag("has_tire_chains")) {
-            if (do_purchase(t_game, 150)) {
-              t_game.set_flag("has_tire_chains", true);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          if (!t_game_state.game().get_flag("has_tire_chains")) {
+            if (do_purchase(t_game_state.game(), 150)) {
+              t_game_state.game().set_flag("has_tire_chains", true);
             }
           } else {
-            t_game.show_message_box("You already own tire chains.");
+            t_game_state.game().show_message_box("You already own tire chains.");
           }
-          show_shop_menu(t_game, false, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 8);
+          show_shop_menu(t_game_state, false, t_bread, t_meat, t_vegetables, t_wood, 8);
         }),
       Game_Action("Buy off-road tires ($500)",
-        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_time, t_simulation_time, t_game){
-          if (!t_game.get_flag("has_offroad_tires")) {
-            if (do_purchase(t_game, 500)) {
-              t_game.set_flag("has_offroad_tires", true);
+        fun[t_bread, t_meat, t_vegetables, t_wood](t_game_state){
+          if (!t_game_state.game().get_flag("has_offroad_tires")) {
+            if (do_purchase(t_game_state.game(), 500)) {
+              t_game_state.game().set_flag("has_offroad_tires", true);
             }
           } else {
-            t_game.show_message_box("You already own off-road tires.");
+            t_game_state.game().show_message_box("You already own off-road tires.");
           }
-          show_shop_menu(t_game, false, t_game_time, t_simulation_time, t_bread, t_meat, t_vegetables, t_wood, 9);
+          show_shop_menu(t_game_state, false, t_bread, t_meat, t_vegetables, t_wood, 9);
         }),
-      Game_Action("Done ($${money} avail) / (${meat+wood+vegetables+bread}/5 cargo)", fun(t_game_time, t_simulation_time, t_game) {})
+      Game_Action("Done ($${money} avail) / (${meat+wood+vegetables+bread}/5 cargo)", fun(t_game_state) {})
 
     ];
 
-  t_game.show_selection_menu(t_game_time, t_simulation_time, actions, t_next);
+  t_game_state.game().show_selection_menu(t_game_state.state(), actions, t_next);
 }
 
 def make_signpost_actions(Vector t_locations) {
 
-  return fun[t_locations](t_game_time, t_simulation_time, t_game, t_obj)
+  return fun[t_locations](t_game_state, t_obj)
   {
     var actions = [];
 
@@ -187,36 +191,38 @@ def make_signpost_actions(Vector t_locations) {
 
       var action_desc = "Travel to ${t_locations[i].name} $${t_locations[i].cost} "
       if (i == 0) {
-        var money = t_game.get_value("money").to_string();
+        var money = t_game_state.game().get_value("money").to_string();
         action_desc += " ($${money} avail)";
       }
 
       actions.push_back_ref(
         Object_Action(action_desc,
-          fun[loc, cost](t_game_time, t_simulation_time, t_game, t_obj)
+          fun[loc, cost](t_game_state, t_obj)
           {
-            travel_to(loc, t_game);
+            travel_to(loc, t_game_state);
           }
         )
       );
     }
-    actions.push_back_ref(Object_Action("Done", fun(t_game_time, t_simulation_time, t_game, t_obj){}));
+    actions.push_back_ref(Object_Action("Done", fun(t_game_state, t_obj){}));
     return actions;
   }
 }
+
+GLOBAL parser = Script_Parser();
 
 // Game engine expects to eval this file and get back a function for populating a game with data.
 // This is that function
 var game_creator = fun(game) {
 
   // create the tilemap from the level definition
-  var map = Tile_Map(game, "resources/Maps/worldmap.json", [Tile_Defaults(2, Tile_Properties(false))]);
+  var map = Tile_Map(game, "resources/Maps/worldmap.json", [Tile_Defaults(2, Tile_Properties(false))], parser);
 
 
-  var collision_action = fun(t_game_time, t_simulation_time, t_game, t_obj, t_collision)
+  var collision_action = fun(t_game_state, t_obj, t_collision)
   {
-    t_obj.get_actions(t_game_time, t_simulation_time, t_game);
-    t_game.show_object_interaction_menu(t_game_time, t_simulation_time, t_obj);
+    t_obj.get_actions(t_game_state);
+    t_game_state.game().show_object_interaction_menu(t_game_state.state(), t_obj);
   };
 
   // Glenn Haven
@@ -226,12 +232,12 @@ var game_creator = fun(game) {
        Travel_To("Mineralville", 10, 12, 6, true, false)]));
 
   map.set_collision_action("glennhaven",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("glennhaven");
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("glennhaven");
     }
   );
 
-  var glennhaven = Tile_Map(game, "resources/Maps/glennhaven.json", []);
+  var glennhaven = Tile_Map(game, "resources/Maps/glennhaven.json", [], parser);
   glennhaven.add_enter_action(
       fun(t_game) {
         if (refusing_business(t_game)) {
@@ -242,9 +248,9 @@ var game_creator = fun(game) {
     );
 
   glennhaven.set_collision_action("ExitSquare",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("world");
-      t_game.teleport_to_tile(2,12);
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("world");
+      t_game_state.game().teleport_to_tile(2,12);
     }
   );
 
@@ -256,18 +262,18 @@ var game_creator = fun(game) {
       ),
       Question("<spread rumors about competitor>",
         [Answer("Joshua", "That's not a very nice thing to say...")],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("have_spread_rumors", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Joshua"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Joshua", true); t_game_state.game().set_flag("have_spread_rumors", true); }
       ),
       Question("<say something nice about competitor>",
         [Answer("Joshua", "That's good to hear.")],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("have_said_something_nice", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Joshua"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Joshua", true); t_game_state.game().set_flag("have_said_something_nice", true); }
       ),
       Question("<say nothing about competitor>",
         [],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Joshua"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Joshua", true); t_game.set_flag("did_not_respond", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Joshua"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Joshua", true); t_game_state.game().set_flag("did_not_respond", true); }
       )
 
 
@@ -275,23 +281,23 @@ var game_creator = fun(game) {
 
 
 
-  var Joshua_actions = fun[Joshua_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Joshua_actions = fun[Joshua_conversation_tree](t_game_state, t_obj){
     return [
       Object_Action("Look",
-        fun(t_game_time, t_simulation_time, t_game, t_obj)
+        fun(t_game_state, t_obj)
         {
-          t_game.show_message_box("The proprietor of this trading post");
+          t_game_state.game().show_message_box("The proprietor of this trading post");
         }
       ),
       Object_Action("Talk To",
-        fun[Joshua_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Joshua_conversation_tree](t_game_state, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Joshua_conversation_tree);
+          t_game_state.game().show_conversation(t_game_state.state(), t_obj, Joshua_conversation_tree);
         }
       ),
       Object_Action("Shop",
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          show_shop_menu(t_game, true, t_game_time, t_simulation_time, 80, 112, 85, 100);
+        fun(t_game_state, t_obj){ 
+          show_shop_menu(t_game_state, true, 80, 112, 85, 100);
         }
       )
     ];
@@ -310,12 +316,12 @@ var game_creator = fun(game) {
        Travel_To("Mineralville", 8, 12, 6, false, true)]));
 
   map.set_collision_action("fairview",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("fairview");
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("fairview");
     }
   );
 
-  var fairview = Tile_Map(game, "resources/Maps/fairview.json", []);
+  var fairview = Tile_Map(game, "resources/Maps/fairview.json", [], parser);
   fairview.add_enter_action(
       fun(t_game) {
         t_game.teleport_to_tile(1, 5);
@@ -323,9 +329,9 @@ var game_creator = fun(game) {
     );
 
   fairview.set_collision_action("ExitSquare",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("world");
-      t_game.teleport_to_tile(13,12);
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("world");
+      t_game_state.game().teleport_to_tile(13,12);
     }
   );
 
@@ -337,46 +343,46 @@ var game_creator = fun(game) {
       Question("Rumors",
         [Answer("Deborah", "Yes, I've heard the rumors too."),
          Answer("Deborah", "It's an unfortunate way to do business.")],
-        fun(t_game){ t_game.get_flag("have_been_notified_of_rumors"); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_been_notified_of_rumors"); }
       ),
       Question("What should I do?",
         [Answer("Deborah", "Don't retaliate. Rumor mongering is not the best way to do business.")],
-        fun(t_game){ t_game.get_flag("have_been_notified_of_rumors"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_deborah_about_rumors", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_been_notified_of_rumors"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_deborah_about_rumors", true); }
       ),
       Question("What now?",
         [Answer("Deborah", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
          Answer("Deborah", "I hope you didn't decide to take matters into your own hands.\nThat rarely works out well.")],
-        fun(t_game){ did_make_all_responses(t_game); },
-        fun(t_game){ t_game.set_flag("deborah_shared_verse", true); }
+        fun(t_game_state){ did_make_all_responses(t_game_state); },
+        fun(t_game_state){ t_game_state.game().set_flag("deborah_shared_verse", true); }
         ),
       Question("Note",
         [Answer("Deborah", "Romans 12:19 says, 'Friends, do not avenge yourselves;\ninstead, leave room for His wrath.\nFor it is written: Vengeance belongs to Me;\nI will repay, says the Lord.'"),
          Answer("Deborah", "This you already know."),
          Answer("Deborah", "Romans 12:20 goes on to say 'But If your enemy is hungry,\nfeed him. If he is thirsty, give him something to drink.\nFor in so doing\nyou will be heaping fiery coals on his head.'"),
          Answer("Deborah", "This is the lesson you've learned today.")],
-        fun(t_game){ t_game.get_flag("saw_note") },
-        fun(t_game){ t_game.set_flag("deborah_shared_second_verse", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("saw_note") },
+        fun(t_game_state){ t_game_state.game().set_flag("deborah_shared_second_verse", true); }
         )
     ]);
 
-  var Deborah_actions = fun[Deborah_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Deborah_actions = fun[Deborah_conversation_tree](t_game_state, t_obj){
     return [
       Object_Action("Look",
-        fun(t_game_time, t_simulation_time, t_game, t_obj)
+        fun(t_game_state, t_obj)
         {
-          t_game.show_message_box("The proprietor of this trading post");
+          t_game_state.game().show_message_box("The proprietor of this trading post");
         }
       ),
       Object_Action("Talk To",
-        fun[Deborah_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Deborah_conversation_tree](t_game_state, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Deborah_conversation_tree);
+          t_game_state.game().show_conversation(t_game_state.state(), t_obj, Deborah_conversation_tree);
         }
       ),
       Object_Action("Shop",
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          show_shop_menu(t_game, false, t_game_time, t_simulation_time, 95, 100, 85, 93);
+        fun(t_game_state, t_obj){ 
+          show_shop_menu(t_game_state, false, 95, 100, 85, 93);
         }
       )
     ];
@@ -396,39 +402,39 @@ var game_creator = fun(game) {
        Travel_To("Camp", 15, 8, 1, true, true)]));
 
   map.set_collision_action("mineralville",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("mineralville");
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("mineralville");
     }
   );
 
-  var mineralville = Tile_Map(game, "resources/Maps/mineralville.json", []);
+  var mineralville = Tile_Map(game, "resources/Maps/mineralville.json", [], parser);
 
   var William_conversation_tree =
     Conversation([
       Question("Rumors",
         [Answer("William", "You must be the new trader in town.\nYour competitor has been saying unflattering things about you."),
          Answer("William", "But you seem like a nice person... I'm not sure I believe them.")],
-        fun(t_game){ !t_game.get_flag("have_been_notified_of_rumors"); },
-        fun(t_game){ t_game.set_flag("have_been_notified_of_rumors", true); }
+        fun(t_game_state){ !t_game_state.game().get_flag("have_been_notified_of_rumors"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_been_notified_of_rumors", true); }
       ),
       Question("What should I do?",
         [Answer("William", "Well, if it were me, I'd start spreading rumors of my own about them!\nYou have to fight for what you get.")],
-        fun(t_game){ t_game.get_flag("have_been_notified_of_rumors"); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_been_notified_of_rumors"); }
       ),
       Question("Note?",
         [Answer("William", "There's a note here from your competitor."),
          Answer("William", "It says he's sorry for starting those rumors about you,\nand promises to set things right")],
-        fun(t_game) { !t_game.get_flag("saw_note") && did_make_all_responses(t_game) && have_said_something_nice(t_game) && t_game.get_flag("deborah_shared_verse"); },
-        fun(t_game) { t_game.set_flag("saw_note", true); }
+        fun(t_game_state) { !t_game_state.game().get_flag("saw_note") && did_make_all_responses(t_game_state) && have_said_something_nice(t_game_state.game()) && t_game_state.game().get_flag("deborah_shared_verse"); },
+        fun(t_game_state) { t_game_state.game().set_flag("saw_note", true); }
       ),
       Question("Share bible verses you've learned.",
         [Answer("William", "Well that is interesting...")],
-        fun(t_game) { t_game.get_flag("deborah_shared_second_verse") }
+        fun(t_game_state) { t_game_state.game().get_flag("deborah_shared_second_verse") }
       )
     ]); 
 
   mineralville.add_enter_action(
-      fun[William_conversation_tree](t_game) {
+      fun(t_game) {
         t_game.teleport_to_tile(2, 5);
 
         if (!t_game.get_flag("have_been_notified_of_rumors")) {
@@ -444,31 +450,31 @@ var game_creator = fun(game) {
     );
 
   mineralville.set_collision_action("ExitSquare",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("world");
-      t_game.teleport_to_tile(14,5);
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("world");
+      t_game_state.game().teleport_to_tile(14,5);
     }
   );
 
 
 
-  var William_actions = fun[William_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var William_actions = fun[William_conversation_tree](t_game_state, t_obj){
     return [
       Object_Action("Look",
-        fun(t_game_time, t_simulation_time, t_game, t_obj)
+        fun(t_game_state, t_obj)
         {
-          t_game.show_message_box("An older, somewhat worn looking man.");
+          t_game_state.game().show_message_box("An older, somewhat worn looking man.");
         }
       ),
       Object_Action("Talk To",
-        fun[William_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[William_conversation_tree](t_game_state, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, William_conversation_tree);
+          t_game_state.game().show_conversation(t_game_state.state(), t_obj, William_conversation_tree);
         }
       ),
       Object_Action("Shop",
-        fun(t_game_time, t_simulation_time, t_game, t_obj){ 
-          show_shop_menu(t_game, false, t_game_time, t_simulation_time, 100, 125, 95, 70);
+        fun(t_game_state, t_obj){ 
+          show_shop_menu(t_game_state, false, 100, 125, 95, 70);
         }
       )
     ];
@@ -486,12 +492,12 @@ var game_creator = fun(game) {
       [Travel_To("Mineralville", 15, 12, 6, true, true)]));
 
   map.set_collision_action("camp",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("camp");
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("camp");
     }
   );
 
-  var camp = Tile_Map(game, "resources/Maps/camp.json", []);
+  var camp = Tile_Map(game, "resources/Maps/camp.json", [], parser);
   camp.add_enter_action(
       fun(t_game) {
         if (refusing_business(t_game)) {
@@ -501,9 +507,9 @@ var game_creator = fun(game) {
       }
     );
   camp.set_collision_action("ExitSquare",
-    fun(t_game_time, t_simulation_time, t_game, t_obj, t_sprite) {
-      t_game.enter_map("world");
-      t_game.teleport_to_tile(7,1);
+    fun(t_game_state, t_obj, t_sprite) {
+      t_game_state.game().enter_map("world");
+      t_game_state.game().teleport_to_tile(7,1);
     }
   );
 
@@ -520,39 +526,39 @@ var game_creator = fun(game) {
       ),
       Question("<spread rumors about competitor>",
         [Answer("Diane", "That's not a very nice thing to say...")],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("have_spread_rumors", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Diane"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Diane", true); t_game_state.game().set_flag("have_spread_rumors", true); }
       ),
       Question("<say something nice about competitor>",
         [Answer("Diane", "That's good to hear.")],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("have_said_something_nice", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Diane"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Diane", true); t_game_state.game().set_flag("have_said_something_nice", true); }
       ),
       Question("<say nothing about competitor>",
         [],
-        fun(t_game){ t_game.get_flag("have_talked_to_deborah_about_rumors") && !t_game.get_flag("have_talked_to_Diane"); },
-        fun(t_game){ t_game.set_flag("have_talked_to_Diane", true); t_game.set_flag("did_not_respond", true); }
+        fun(t_game_state){ t_game_state.game().get_flag("have_talked_to_deborah_about_rumors") && !t_game_state.game().get_flag("have_talked_to_Diane"); },
+        fun(t_game_state){ t_game_state.game().set_flag("have_talked_to_Diane", true); t_game_state.game().set_flag("did_not_respond", true); }
       )
 
     ]);
 
 
-  def camp_shop(t_game_time, t_simulation_time, t_game, t_obj) {
-    show_shop_menu(t_game, true, t_game_time, t_simulation_time, 115, 147, 104, 84);
+  def camp_shop(t_game_state, t_obj) {
+    show_shop_menu(t_game_state, true, 115, 147, 104, 84);
   }
 
-  var Dana_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Dana_actions = fun[Twin_conversation_tree](t_game_state, t_obj){
     return [
       Object_Action("Look",
-        fun(t_game_time, t_simulation_time, t_game, t_obj)
+        fun(t_game_state, t_obj)
         {
-          t_game.show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
+          t_game_state.game().show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
         }
       ),
       Object_Action("Talk To",
-        fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Twin_conversation_tree](t_game_state, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Twin_conversation_tree);
+          t_game_state.game().show_conversation(t_game_state.state(), t_obj, Twin_conversation_tree);
         }
       ),
       Object_Action("Shop",
@@ -564,18 +570,18 @@ var game_creator = fun(game) {
   camp.set_collision_action("Dana", collision_action);
   camp.set_action_generator("Dana", Dana_actions);
 
-  var Diane_actions = fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj){
+  var Diane_actions = fun[Twin_conversation_tree](t_game_state, t_obj){
     return [
       Object_Action("Look",
-        fun(t_game_time, t_simulation_time, t_game, t_obj)
+        fun(t_game_state, t_obj)
         {
-          t_game.show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
+          t_game_state.game().show_message_box("You see two women who look VERY similar.\nThey are approachable and friendly looking.");
         }
       ),
       Object_Action("Talk To",
-        fun[Twin_conversation_tree](t_game_time, t_simulation_time, t_game, t_obj)
+        fun[Twin_conversation_tree](t_game_state, t_obj)
         {
-          t_game.show_conversation(t_game_time, t_simulation_time, t_obj, Twin_conversation_tree);
+          t_game_state.game().show_conversation(t_game_state.state(), t_obj, Twin_conversation_tree);
         }
       ),
       Object_Action("Shop",
@@ -610,8 +616,8 @@ var game_creator = fun(game) {
         t_game.show_message_box("Unfortunately we ran out of time for graphics.\nOur NPCs are pinheads.\n\nOur PC is a marble.\n\nOur modern world is a medieval fantasy world.");
         t_game.show_message_box("You have $${money} to start with.\nUse it wisely.");
         t_game.add_queued_action(
-          fun(t_game_time, t_simulation_time, t_game) {
-            t_game.enter_map("glennhaven");
+          fun(t_game_state) {
+            t_game_state.game().enter_map("glennhaven");
           }
         );
       }

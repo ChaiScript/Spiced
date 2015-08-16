@@ -13,6 +13,7 @@ namespace spiced
   class Game;
   struct Object_Action;
   struct Game_Action;
+  class Game_State;
 
   struct Answer
   {
@@ -30,8 +31,8 @@ namespace spiced
   {
     Question(std::string t_question,
       std::vector<Answer> t_answers,
-      std::function<bool(const float, const float, Game &, Object &)> t_is_available,
-      std::function<void(const float, const float, Game &, Object &)> t_action)
+      std::function<bool(const Game_State &, Object &)> t_is_available,
+      std::function<void(const Game_State &, Object &)> t_action)
       : question(std::move(t_question)),
         answers(std::move(t_answers)),
         is_available(std::move(t_is_available)),
@@ -41,17 +42,17 @@ namespace spiced
 
     Question(std::string t_question,
       std::vector<Answer> t_answers,
-      std::function<bool(Game &)> t_is_available = [](Game &){return true;},
-      std::function<void(Game &)> t_action = {})
+      std::function<bool(const Game_State &)> t_is_available = [](const Game_State &){return true;},
+      std::function<void(const Game_State &)> t_action = {})
       : question(std::move(t_question)),
         answers(std::move(t_answers)),
-        is_available([t_is_available](const float, const float, Game &t_game, Object &){ return t_is_available(t_game); }),
+        is_available([t_is_available](const Game_State &t_game, Object &){ return t_is_available(t_game); }),
         action(
-            [t_action]() -> std::function<void(const float, const float, Game &, Object &)> {
+            [t_action]() -> std::function<void(const Game_State &, Object &)> {
               if (t_action) {
-                return [t_action](const float, const float, Game &t_game, Object &){ t_action(t_game); };
+                return [t_action](const Game_State &t_game, Object &){ t_action(t_game); };
               } else {
-                return std::function<void(const float, const float, Game &, Object &)>();
+                return std::function<void(const Game_State &, Object &)>();
               }
             }())
     {
@@ -62,8 +63,8 @@ namespace spiced
 
     std::string question;
     std::vector<Answer> answers;
-    std::function<bool(const float, const float, Game &, Object &)> is_available;
-    std::function<void(const float, const float, Game &, Object &)> action;
+    std::function<bool(const Game_State &, Object &)> is_available;
+    std::function<void(const Game_State &, Object &)> action;
 
   };
 
@@ -85,16 +86,16 @@ namespace spiced
 
     virtual bool is_done() const = 0;
 
-    virtual void update(const float t_game_time, const float t_simulation_time, Game &t_game) = 0;
+    virtual void update(const Game_State &t_game) = 0;
 
   };
 
   class Queued_Action : public Game_Event
   {
   public:
-    Queued_Action(std::function<void(const float, const float, Game &)> t_action);
+    Queued_Action(std::function<void(const Game_State &)> t_action);
 
-    virtual void update(const float, const float, Game &);
+    virtual void update(const Game_State &);
 
     virtual bool is_done() const;
 
@@ -104,7 +105,7 @@ namespace spiced
 
   private:
     bool m_done = false;
-    std::function<void(const float, const float, Game &)> m_action;
+    std::function<void(const Game_State &)> m_action;
   };
 
 
@@ -159,7 +160,7 @@ namespace spiced
 
     virtual ~Message_Box() = default;
 
-    virtual void update(const float t_game_time, const float /*t_simulation_time*/, Game &t_game);
+    virtual void update(const Game_State &t_game);
 
     virtual bool is_done() const;
 
@@ -191,7 +192,7 @@ namespace spiced
 
     virtual ~Selection_Menu() = default;
 
-    virtual void update(const float t_game_time, const float t_simulation_time, Game &t_game) override;
+    virtual void update(const Game_State &) override;
 
     virtual bool is_done() const override;
 

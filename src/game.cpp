@@ -89,7 +89,7 @@ namespace spiced {
     }
   }
 
-  void Game::add_queued_action(const std::function<void(const float, const float, Game &)> &t_action)
+  void Game::add_queued_action(const std::function<void(const Game_State &)> &t_action)
   {
     m_game_events.emplace_back(new Queued_Action(t_action));
   }
@@ -99,29 +99,29 @@ namespace spiced {
     m_game_events.emplace_back(new Message_Box(t_msg, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, Location::Bottom, t_texture));
   }
 
-  void Game::show_conversation(const float t_game_time, const float t_simulation_time, Object &t_obj, const Conversation &t_conversation)
+  void Game::show_conversation(const Simulation_State &t_state, Object &t_obj, const Conversation &t_conversation)
   {
     std::vector<Object_Action> actions;
     for (const auto &q : t_conversation.questions)
     {
-      if (!q.is_available || q.is_available(t_game_time, t_simulation_time, *this, t_obj))
+      if (!q.is_available || q.is_available(Game_State(t_state, *this), t_obj))
       {
         actions.emplace_back(q.question,
-          [q, t_game_time, t_simulation_time, &t_obj, t_conversation](const float, const float, Game &t_game, Object &obj)
-        {
-          for (const auto &answer : q.answers) {
-            const std::string portrait = obj.get_portrait();
-            const sf::Texture *texture = nullptr;
-            if (!portrait.empty()) {
-              texture = &t_game.get_texture(portrait);
+          [q, t_state, &t_obj, t_conversation](const Game_State &t_game, Object &obj)
+          {
+            for (const auto &answer : q.answers) {
+              const std::string portrait = obj.get_portrait();
+              const sf::Texture *texture = nullptr;
+              if (!portrait.empty()) {
+                texture = &t_game.game().get_texture(portrait);
+              }
+              t_game.game().show_message_box(answer.speaker + ":\n\n" + answer.answer, texture);
             }
-            t_game.show_message_box(answer.speaker + ":\n\n" + answer.answer, texture);
+            if (q.action) {
+              using namespace std::placeholders;
+              t_game.game().add_queued_action(std::bind(q.action, _1, std::ref(obj)));
+            }
           }
-          if (q.action) {
-            using namespace std::placeholders;
-            t_game.add_queued_action(std::bind(q.action, _1, _2, _3, std::ref(obj)));
-          }
-        }
         );
       }
     }
@@ -129,7 +129,7 @@ namespace spiced {
     // add a default action
     if (actions.empty()) {
       actions.emplace_back("...",
-        [](const float, const float, Game &, Object &)
+        [](const Game_State &, Object &)
       {}
       );
     }
@@ -138,12 +138,12 @@ namespace spiced {
     m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, actions, Location::Bottom));
   }
 
-  void Game::show_object_interaction_menu(const float t_game_time, const float t_simulation_time, Object &t_obj)
+  void Game::show_object_interaction_menu(const Simulation_State &t_state, Object &t_obj)
   {
-    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_obj.get_actions(t_game_time, t_simulation_time, *this), Location::Right));
+    m_game_events.emplace_back(new Object_Interaction_Menu(t_obj, get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_obj.get_actions(Game_State(t_state, *this)), Location::Right));
   }
 
-  void Game::show_selection_menu(const float /*t_game_time*/, const float /*t_simulation_time*/, const std::vector<Game_Action> &t_selections, const size_t t_selection)
+  void Game::show_selection_menu(const Simulation_State &, const std::vector<Game_Action> &t_selections, const size_t t_selection)
   {
     m_game_events.emplace_back(new Selection_Menu(get_font("resources/FreeMonoBold.ttf"), 17, sf::Color(255, 255, 255, 255), sf::Color(0, 200, 200, 255), sf::Color(0, 0, 0, 128), sf::Color(255, 255, 255, 200), 3, t_selections, t_selection, Location::Right));
   }
@@ -163,9 +163,9 @@ namespace spiced {
     return *m_game_events.front();
   }
 
-  void Game::update(const float t_game_time, const float t_simulation_time)
+  void Game::update(const Simulation_State &t_state)
   {
-    float simulation_time = t_simulation_time;
+    float simulation_time = t_state.simulation_time;
 
     if (has_pending_events())
     {
@@ -178,25 +178,28 @@ namespace spiced {
       }
     }
 
+    const Game_State game_state(Simulation_State(t_state.game_time, simulation_time), *this);
+
     if (m_map != m_maps.end())
     {
       auto &map = m_map->second;
       auto distance = Game::get_input_direction_vector() * 45.0f * simulation_time;
+
       for (auto &collision : map.get_collisions(m_avatar, distance))
       {
-        collision.get().do_collision(t_game_time, simulation_time, *this, m_avatar);
+        collision.get().do_collision(game_state, m_avatar);
         break; // only handle one collision
       }
 
       distance = map.adjust_move(m_avatar, distance);
-      map.do_move(simulation_time, m_avatar, distance);
-      map.update(t_game_time, simulation_time, *this);
+      map.do_move(game_state, m_avatar, distance);
+      map.update(game_state);
       m_avatar.move(distance);
     }
 
     if (!m_game_events.empty())
     {
-      m_game_events.front()->update(t_game_time, t_simulation_time, *this);
+      m_game_events.front()->update(game_state);
     }
   }
 
